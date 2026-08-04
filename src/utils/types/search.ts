@@ -4,14 +4,14 @@ export type SearchSetting = SettingItem<Search>
 
 export const searchList: SearchSetting[] = [
   {
-    name: '必应',
-    enName: 'Bing',
-    value: { name: '必应', enName: 'Bing', url: 'https://www.bing.com/search', key: 'q', favicon: '/svg/bing.svg', s: 'bi' },
-  },
-  {
     name: '百度',
     enName: 'Baidu',
     value: { name: '百度', enName: 'Baidu', url: 'https://www.baidu.com/s', key: 'wd', favicon: '/svg/baidu.svg', s: 'bd' },
+  },
+  {
+    name: '必应',
+    enName: 'Bing',
+    value: { name: '必应', enName: 'Bing', url: 'https://www.bing.com/search', key: 'q', favicon: '/svg/bing.svg', s: 'bi' },
   },
   {
     name: '谷歌',
