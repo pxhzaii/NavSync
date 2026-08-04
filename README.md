@@ -90,7 +90,7 @@ GitHub Token 用于后端代你操作 Gist（创建、读取、更新）。**仅
    | 变量名 | 说明 | 示例值 |
    | --- | --- | --- |
    | `GITHUB_TOKEN` | 第二步获取的 GitHub Token | `ghp_xxxxxxxxxxxx` |
-   | `CLOUD_PASSWORD` | 你自定义的访问口令，同步时需要输入 | `你的同步密码，建议复杂点` |
+   | `CLOUD_PASSWORD` | 自定义一个访问口令，同步时需要 | `你的同步密码，建议复杂点` |
 
 11. 点击 **Save and Deploy**
 
