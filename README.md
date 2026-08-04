@@ -9,7 +9,7 @@ AIGC:
   ReservedCode2: '25c16ae9-5379-4edb-a71c-2943fb0488f0'
 ---
 
-## COME COME
+## COME COME 
 
 ## 介绍
 [COME COME](https://dock.xbarry.com) 是一款极简的网址导航工具，旨在为用户提供纯粹、简洁、高效的上网体验。
@@ -18,7 +18,7 @@ AIGC:
 
 ![index](https://raw.githubusercontent.com/hellojuantu/comecome/refs/heads/main/public/img/index.png?raw=true)
 
-![settings](https://github.com/hellojuantu/comecome/blob/main/public/img/settings.png?raw=true)
+![设置](https://github.com/hellojuantu/comecome/blob/main/public/img/settings.png?raw=true)
 
 ## 功能
 - 个性主题切换（月白、初春、瀚海、大漠）
@@ -37,9 +37,9 @@ AIGC:
 ### 架构说明
 
 ```
-浏览器  ──口令──▶  Cloudflare Pages  ──Token──▶  GitHub Gist API
-                   (前端 + Functions)
-                   (环境变量存 Token+口令)
+浏览器 ──口令──▶ Cloudflare Pages ──Token──▶ GitHub Gist API
+                   (前端 + 函数)
+                   (环境变量存储 Token+口令)
 ```
 
 - GitHub Token 和访问口令存储在 Pages 环境变量中，前端代码不含机密
@@ -48,10 +48,10 @@ AIGC:
 
 ### 一键部署步骤
 
-1. **Fork 本项目到你的 GitHub**
+1. **将本项目 Fork 到你的 GitHub**
 
 2. **在 Cloudflare Pages 创建项目**
-   - 进入 Cloudflare Dashboard → Pages → Create a project → Connect to Git
+   - 进入 Cloudflare Dashboard → Pages → 创建项目 → 连接到 Git
    - 选择你 Fork 的仓库
    - 构建命令：`npm run build`
    - 输出目录：`dist`
