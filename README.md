@@ -63,7 +63,7 @@ GitHub Token 用于后端代你操作 Gist（创建、读取、更新）。**仅
 2. 点击 **Generate new token (classic)**
 3. 填写以下信息：
    - **Note**（备注）：随便写，如 `NavSync Cloud Sync`
-   - **Expiration**（有效期）：按需选择，建议不超过 1 年
+   - **Expiration**（有效期）：按需选择
    - **Scopes**（权限）：**只勾选 `gist`**，其他都不勾
 4. 点击页面底部的 **Generate token**
 5. 复制生成的 Token（格式类似 `ghp_xxxxxxxxxxxx`），**页面关闭后无法再看到**
@@ -75,19 +75,24 @@ GitHub Token 用于后端代你操作 Gist（创建、读取、更新）。**仅
 
 1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com)
 2. 进入 **Workers & Pages** → 点击 **Create** → 选择 **Pages** → 选择 **Connect to Git**
-3. 授权 Cloudflare 访问你的 GitHub，选择你 Fork 的 `NavSync` 仓库
-4. 填写构建设置：
-   - **Framework preset**：`Vue`（或保持默认）
+3. 注意是pages，在最底下一行小字。
+4. 注意是pages，在最底下一行小字。
+5. 注意是pages，在最底下一行小字。
+6. 注意是pages，在最底下一行小字。
+7. 注意是pages，在最底下一行小字。
+8. 授权 Cloudflare 访问你的 GitHub，选择你 Fork 的 `NavSync` 仓库
+9. 填写构建设置：
+   - **Framework preset**：`Vue`
    - **Build command**：`npm run build`
    - **Build output directory**：`dist`
-5. 展开底部的 **Environment variables**，添加以下两个变量：
+10. 展开底部的 **Environment variables**，添加以下两个变量：
 
    | 变量名 | 说明 | 示例值 |
    | --- | --- | --- |
    | `GITHUB_TOKEN` | 第二步获取的 GitHub Token | `ghp_xxxxxxxxxxxx` |
    | `CLOUD_PASSWORD` | 你自定义的访问口令，同步时需要输入 | `your-password` |
 
-6. 点击 **Save and Deploy**
+11. 点击 **Save and Deploy**
 
 ### 第四步：等待部署完成
 
