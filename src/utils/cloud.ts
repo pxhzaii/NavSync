@@ -126,7 +126,24 @@ export async function validatePassword(password: string): Promise<{ valid: boole
 /** 上传配置到云端 */
 export async function uploadToCloud(data: Category[], settings: Settings): Promise<{ success: boolean; gistId?: string; error?: string }> {
   const password = getStoredPassword()
-  const gistId = getStoredGistId()
+  let gistId = getStoredGistId()
+
+  // 本地没有 gistId 时，先查找云端是否已有 Gist
+  if (!gistId) {
+    try {
+      const findRes = await apiFetch('/api/find-gist', {
+        method: 'GET',
+      }, isPasswordAuthed() ? password : undefined)
+      const findResult = await findRes.json() as { found: boolean; gistId?: string }
+      if (findResult.found && findResult.gistId) {
+        gistId = findResult.gistId
+        setStoredGistId(gistId)
+      }
+    }
+    catch {
+      // 查找失败不阻塞上传，直接创建新 Gist
+    }
+  }
 
   try {
     const res = await apiFetch('/api/upload', {
@@ -151,9 +168,27 @@ export async function uploadToCloud(data: Category[], settings: Settings): Promi
 
 /** 从云端下载配置 */
 export async function downloadFromCloud(): Promise<{ success: boolean; data?: CloudData; error?: string }> {
-  const gistId = getStoredGistId()
+  let gistId = getStoredGistId()
+
+  // 本地没有 gistId 时，自动从云端查找
   if (!gistId) {
-    return { success: false, error: '尚未上传过配置，无云端数据可拉取' }
+    const password = getStoredPassword()
+    try {
+      const findRes = await apiFetch('/api/find-gist', {
+        method: 'GET',
+      }, isPasswordAuthed() ? password : undefined)
+      const findResult = await findRes.json() as { found: boolean; gistId?: string }
+      if (findResult.found && findResult.gistId) {
+        gistId = findResult.gistId
+        setStoredGistId(gistId)
+      }
+      else {
+        return { success: false, error: '云端未找到配置数据，请先上传一次配置' }
+      }
+    }
+    catch (e: any) {
+      return { success: false, error: timeoutMsg(e) }
+    }
   }
 
   const password = getStoredPassword()
