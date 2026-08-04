@@ -82,15 +82,15 @@ GitHub Token 用于后端代你操作 Gist（创建、读取、更新）。**仅
 7. 注意是pages，在最底下一行小字。
 8. 授权 Cloudflare 访问你的 GitHub，选择你 Fork 的 `NavSync` 仓库
 9. 填写构建设置：
-   - **Framework preset**：`Vue`
-   - **Build command**：`npm run build`
-   - **Build output directory**：`dist`
-10. 展开底部的 **Environment variables**，添加以下两个变量：
+   - **Framework preset**框架预设：`Vue`
+   - **Build command**构建命令：`npm run build`
+   - **Build output directory**构建输出目录：`dist`
+10. 展开底部的 **Environment variables**环境变量（高级），添加以下两个变量：
 
    | 变量名 | 说明 | 示例值 |
    | --- | --- | --- |
    | `GITHUB_TOKEN` | 第二步获取的 GitHub Token | `ghp_xxxxxxxxxxxx` |
-   | `CLOUD_PASSWORD` | 你自定义的访问口令，同步时需要输入 | `your-password` |
+   | `CLOUD_PASSWORD` | 你自定义的访问口令，同步时需要输入 | `你的同步密码，建议复杂点` |
 
 11. 点击 **Save and Deploy**
 
