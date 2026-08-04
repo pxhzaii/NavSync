@@ -3,10 +3,10 @@ AIGC:
   ContentProducer: '001191110102MAD55U9H0F10002'
   ContentPropagator: '001191110102MAD55U9H0F10002'
   Label: '1'
-  ProduceID: 'ad22bc6e-462a-4082-91b5-8e810c823688'
-  PropagateID: 'ad22bc6e-462a-4082-91b5-8e810c823688'
-  ReservedCode1: '28935821-8779-4dd0-b5cc-553949c46e15'
-  ReservedCode2: '28935821-8779-4dd0-b5cc-553949c46e15'
+  ProduceID: '9cc1ebd7-6607-4be2-91bd-6b8af3a82ecf'
+  PropagateID: '9cc1ebd7-6607-4be2-91bd-6b8af3a82ecf'
+  ReservedCode1: '3b32832e-12e4-46f2-b403-4f002835ca42'
+  ReservedCode2: '3b32832e-12e4-46f2-b403-4f002835ca42'
 ---
 
 # NavSync
@@ -169,6 +169,15 @@ git push origin main
 ```
 
 推送后 Cloudflare Pages 会自动重新部署。
+
+## 自定义修改
+
+| 想改什么 | 文件位置 | 说明 |
+| --- | --- | --- |
+| 浏览器标签图标 | `public/favicon.png` | 替换图片文件即可，建议 32x32 或 64x64 PNG |
+| 页面头部 Logo | `public/favicon.png` | 与标签图标共用同一文件，修改同上 |
+| 网站标题 | `index.html` | 修改 `<title>` 标签内容 |
+| 默认搜索引擎 | `src/utils/types/search.ts` + `src/preset.json` | 列表顺序和 `preset.json` 中 `settings.search` 字段 |
 
 ## 感谢
 
