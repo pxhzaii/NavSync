@@ -64,22 +64,104 @@ export function jsonResponse(data: any, status = 200): Response {
   })
 }
 
-/** 口令校验：通过返回 null，不通过返回 Response */
-export function checkPassword(request: Request, env: Env): Response | null {
-  if (!env.CLOUD_PASSWORD) {
-    return null // 未设置口令，跳过校验
-  }
-  const pwd = request.headers.get('X-Cloud-Password')
-  if (pwd !== env.CLOUD_PASSWORD) {
-    return jsonResponse({ error: '访问口令不正确' }, 403)
-  }
-  return null
-}
-
 /** 统一错误处理 */
 export function handleError(err: any): Response {
   const msg = err?.name === 'AbortError'
     ? 'GitHub API 响应超时，请稍后重试'
     : (err?.message || 'Internal Server Error')
   return jsonResponse({ error: msg }, 500)
+}
+
+// ---------- 暴力破解防护（内存限流） ----------
+// 注意：内存计数按 Cloudflare 隔离实例独立，分布式 IP 池可绕过低频率尝试。
+// 如需真正跨实例统一计数，需绑定 KV 做持久化计数（当前项目未绑定 KV）。
+
+const MAX_ATTEMPTS = 5            // 窗口内最多失败 5 次
+const WINDOW_MS = 5 * 60 * 1000   // 窗口：5 分钟
+const LOCK_MS = 15 * 60 * 1000    // 锁定时长：15 分钟
+
+interface AttemptRecord {
+  count: number
+  firstFailAt: number
+  lockedUntil: number
+}
+
+const attempts = new Map<string, AttemptRecord>()
+
+function getClientIp(request: Request): string {
+  return request.headers.get('CF-Connecting-IP') || request.headers.get('x-real-ip') || 'unknown'
+}
+
+function isLocked(ip: string): { locked: boolean; retryAfterSec: number } {
+  const rec = attempts.get(ip)
+  if (!rec) return { locked: false, retryAfterSec: 0 }
+  const now = Date.now()
+  if (rec.lockedUntil > now) {
+    return { locked: true, retryAfterSec: Math.ceil((rec.lockedUntil - now) / 1000) }
+  }
+  // 锁定已过期，清除记录
+  if (rec.lockedUntil > 0) {
+    attempts.delete(ip)
+  }
+  return { locked: false, retryAfterSec: 0 }
+}
+
+function recordFailure(ip: string) {
+  const now = Date.now()
+  const rec = attempts.get(ip)
+  if (!rec) {
+    attempts.set(ip, { count: 1, firstFailAt: now, lockedUntil: 0 })
+    return
+  }
+  // 窗口已过期，重置计数
+  if (now - rec.firstFailAt > WINDOW_MS) {
+    rec.count = 1
+    rec.firstFailAt = now
+    rec.lockedUntil = 0
+    return
+  }
+  rec.count += 1
+  if (rec.count >= MAX_ATTEMPTS) {
+    rec.lockedUntil = now + LOCK_MS
+  }
+}
+
+function recordSuccess(ip: string) {
+  attempts.delete(ip)
+}
+
+/**
+ * 口令校验（所有 API 端点统一使用）：
+ * 1. 未设置 CLOUD_PASSWORD → 跳过校验
+ * 2. 校验 X-Cloud-Password 头与 CLOUD_PASSWORD 是否一致
+ * 3. 所有失败（含口令错误）都计入失败次数，超过阈值锁 IP
+ * 通过返回 null，不通过返回 Response
+ */
+export function checkPassword(request: Request, env: Env): Response | null {
+  if (!env.CLOUD_PASSWORD) {
+    return null // 未设置口令，跳过校验
+  }
+
+  const ip = getClientIp(request)
+
+  // 限流检查：锁定期内直接拒绝
+  const lock = isLocked(ip)
+  if (lock.locked) {
+    return jsonResponse({
+      error: `尝试次数过多，请 ${lock.retryAfterSec} 秒后再试`,
+      locked: true,
+      retryAfterSec: lock.retryAfterSec,
+    }, 429)
+  }
+
+  const pwd = request.headers.get('X-Cloud-Password')
+  if (pwd !== env.CLOUD_PASSWORD) {
+    // 口令缺失或错误 → 计入失败
+    recordFailure(ip)
+    return jsonResponse({ error: '访问口令不正确' }, 403)
+  }
+
+  // 口令正确 → 清除该 IP 的失败记录
+  recordSuccess(ip)
+  return null
 }
