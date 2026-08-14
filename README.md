@@ -1,13 +1,4 @@
----
-AIGC:
-  ContentProducer: '001191110102MAD55U9H0F10002'
-  ContentPropagator: '001191110102MAD55U9H0F10002'
-  Label: '1'
-  ProduceID: '6742a0d9-e307-45f6-a017-db1a34de0a08'
-  PropagateID: '6742a0d9-e307-45f6-a017-db1a34de0a08'
-  ReservedCode1: '96e8b8c9-1dbf-4155-8d9d-a563f44fb4e2'
-  ReservedCode2: '96e8b8c9-1dbf-4155-8d9d-a563f44fb4e2'
----
+
 
 # NavSync
 
@@ -198,4 +189,3 @@ git push origin main
 
 如果您有任何问题、建议或反馈，欢迎提 Issue。
 
-> AI生成
