@@ -101,13 +101,24 @@ export async function fetchCloudStatus(): Promise<{ passwordMode: boolean; error
 }
 
 /** 验证访问口令 */
-export async function validatePassword(password: string): Promise<{ valid: boolean; error?: string }> {
+export interface PasswordResult {
+  valid: boolean
+  error?: string
+  /** 剩余尝试次数（口令错误时返回） */
+  remaining?: number
+  /** 是否被锁定 */
+  locked?: boolean
+  /** 锁定剩余秒数 */
+  retryAfterSec?: number
+}
+
+export async function validatePassword(password: string): Promise<PasswordResult> {
   try {
     const res = await apiFetch('/api/verify-password', {
       method: 'POST',
       body: JSON.stringify({ password }),
     })
-    const data = await res.json() as { valid: boolean; error?: string }
+    const data = await res.json() as PasswordResult
     if (data.valid) {
       setStoredPassword(password)
       setPasswordAuthed(true)

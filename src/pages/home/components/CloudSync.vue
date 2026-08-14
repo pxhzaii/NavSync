@@ -37,13 +37,20 @@ const cloudStore = useCloudStore()
           <n-button
             type="primary"
             text-color="#ffffff"
-            :disabled="!cloudStore.passwordInput.trim()"
+            :disabled="!cloudStore.passwordInput.trim() || cloudStore.isLocked"
             @click="cloudStore.verifyPassword"
           >
             验证
           </n-button>
         </div>
-        <div v-else text-12 opacity-70 flex items-center gap-x-8>
+        <div v-if="!cloudStore.passwordAuthed && cloudStore.passwordHint" mt-8 text-12 style="color: #d03050;">
+          {{ cloudStore.passwordHint }}
+        </div>
+        <div v-if="cloudStore.isLocked" mt-8 text-12 style="color: #d03050;" flex items-center gap-x-4>
+          <span i-carbon:warning-alt />
+          <span>已锁定，{{ cloudStore.formatLockTime(cloudStore.lockRemainingSec) }} 后自动解锁</span>
+        </div>
+        <div v-if="cloudStore.passwordAuthed" text-12 opacity-70 flex items-center gap-x-8>
           <span i-carbon:checkmark-filled style="color: #18a058;" />
           <span>口令已验证</span>
         </div>

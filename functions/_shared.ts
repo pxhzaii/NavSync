@@ -106,28 +106,49 @@ function isLocked(ip: string): { locked: boolean; retryAfterSec: number } {
   return { locked: false, retryAfterSec: 0 }
 }
 
-function recordFailure(ip: string) {
+function recordFailure(ip: string): { remaining: number } {
   const now = Date.now()
   const rec = attempts.get(ip)
   if (!rec) {
     attempts.set(ip, { count: 1, firstFailAt: now, lockedUntil: 0 })
-    return
+    return { remaining: MAX_ATTEMPTS - 1 }
   }
   // 窗口已过期，重置计数
   if (now - rec.firstFailAt > WINDOW_MS) {
     rec.count = 1
     rec.firstFailAt = now
     rec.lockedUntil = 0
-    return
+    return { remaining: MAX_ATTEMPTS - 1 }
   }
   rec.count += 1
   if (rec.count >= MAX_ATTEMPTS) {
     rec.lockedUntil = now + LOCK_MS
+    return { remaining: 0 }
   }
+  return { remaining: MAX_ATTEMPTS - rec.count }
 }
 
 function recordSuccess(ip: string) {
   attempts.delete(ip)
+}
+
+/** 查询当前 IP 的限流状态（用于前端提示剩余次数/封禁时间） */
+export function getRateLimitStatus(request: Request): { locked: boolean; retryAfterSec?: number; remaining?: number } {
+  const ip = getClientIp(request)
+  const lock = isLocked(ip)
+  if (lock.locked) {
+    return { locked: true, retryAfterSec: lock.retryAfterSec }
+  }
+  const rec = attempts.get(ip)
+  if (!rec) {
+    return { locked: false, remaining: MAX_ATTEMPTS }
+  }
+  // 窗口过期自动重置
+  if (Date.now() - rec.firstFailAt > WINDOW_MS) {
+    attempts.delete(ip)
+    return { locked: false, remaining: MAX_ATTEMPTS }
+  }
+  return { locked: false, remaining: Math.max(0, MAX_ATTEMPTS - rec.count) }
 }
 
 /**
@@ -156,9 +177,12 @@ export function checkPassword(request: Request, env: Env): Response | null {
 
   const pwd = request.headers.get('X-Cloud-Password')
   if (pwd !== env.CLOUD_PASSWORD) {
-    // 口令缺失或错误 → 计入失败
-    recordFailure(ip)
-    return jsonResponse({ error: '访问口令不正确' }, 403)
+    // 口令缺失或错误 → 计入失败，返回剩余次数
+    const { remaining } = recordFailure(ip)
+    return jsonResponse({
+      error: '访问口令不正确',
+      remaining: remaining,
+    }, 403)
   }
 
   // 口令正确 → 清除该 IP 的失败记录
