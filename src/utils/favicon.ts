@@ -1,4 +1,8 @@
-const FAVICON_API = 'https://api.iowen.cn/favicon/'
+const FAVICON_API = 'https://icons.duckduckgo.com/ip3/'
+
+// iowen 接口偶尔不稳定，改用 DuckDuckGo（稳定、国内直连、无调用限制）
+// 旧接口: https://api.iowen.cn/favicon/{domain}.png
+// 新接口: https://icons.duckduckgo.com/ip3/{domain}.ico
 
 export const DEFAULT_FAVICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMzIgMzIiPjxwYXRoIGQ9Ik0xNyAyMmgydjJoLTJ6IiBmaWxsPSJjdXJyZW50Q29sb3IiPjwvcGF0aD48cGF0aCBkPSJNMTcgMThoMnYyaC0yeiIgZmlsbD0iY3VycmVudENvbG9yIj48L3BhdGg+PHBhdGggZD0iTTE0IDI0aDN2MmgtM3oiIGZpbGw9ImN1cnJlbnRDb2xvciI+PC9wYXRoPjxwYXRoIGQ9Ik0xNiAyYTE0IDE0IDAgMSAwIDE0IDE0QTE0LjAxNiAxNC4wMTYgMCAwIDAgMTYgMnpNNC43IDIwSDZsNC4xNzcgMi42YTEgMSAwIDAgMCAxLjM2LS4yOTRsMS4wMDgtMS41MTJhMSAxIDAgMCAwLS4xMjUtMS4yNjFMMTAgMTcuMTEyTDExIDE0aDUuMzIzYTEgMSAwIDAgMCAuOTI4LS42MjhsMS41ODItMy45NTVhMSAxIDAgMCAwLS4wMzQtLjgxOWwtMi4yODYtNC41NzJBMTEuOTY1IDExLjk2NSAwIDAgMSAyNi4zNzYgMjJIMjNhMSAxIDAgMCAwLTEgMXYzLjM3N0ExMS45NTggMTEuOTU4IDAgMCAxIDQuNyAyMHoiIGZpbGw9ImN1cnJlbnRDb2xvciI+PC9wYXRoPjwvc3ZnPg=='
 
@@ -48,5 +52,5 @@ export function getFaviconUrl(url: string) {
     return optUrl
   }
   
-  return FAVICON_API + getDomainName(url) + '.png'
+  return FAVICON_API + getDomainName(url) + '.ico'
 }
