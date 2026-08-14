@@ -43,12 +43,14 @@ const cloudStore = useCloudStore()
             验证
           </n-button>
         </div>
-        <div v-if="!cloudStore.passwordAuthed && cloudStore.passwordHint" mt-8 text-12 style="color: #d03050;">
-          {{ cloudStore.passwordHint }}
-        </div>
+        <!-- 锁定状态：显示锁定提示（互斥，避免与 passwordHint 重复） -->
         <div v-if="cloudStore.isLocked" mt-8 text-12 style="color: #d03050;" flex items-center gap-x-4>
           <span i-carbon:warning-alt />
           <span>已锁定，{{ cloudStore.formatLockTime(cloudStore.lockRemainingSec) }} 后自动解锁</span>
+        </div>
+        <!-- 口令错误提示（锁定时不显示） -->
+        <div v-if="!cloudStore.passwordAuthed && cloudStore.passwordHint && !cloudStore.isLocked" mt-8 text-12 style="color: #d03050;">
+          {{ cloudStore.passwordHint }}
         </div>
         <div v-if="cloudStore.passwordAuthed" text-12 opacity-70 flex items-center gap-x-8>
           <span i-carbon:checkmark-filled style="color: #18a058;" />

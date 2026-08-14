@@ -151,8 +151,9 @@ export async function uploadToCloud(data: Category[], settings: Settings): Promi
         setStoredGistId(gistId)
       }
     }
-    catch {
-      // 查找失败不阻塞上传，直接创建新 Gist
+    catch (e: any) {
+      // 查找失败不应静默创建新 Gist，避免产生重复 Gist；提示用户重试
+      return { success: false, error: `无法确认云端 Gist 状态：${timeoutMsg(e)}，请重试` }
     }
   }
 

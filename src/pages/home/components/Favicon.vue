@@ -25,6 +25,12 @@ const { iconStyle } = useIconStyle()
 const isGen = ref(false)
 const imgLoaded = ref(false)
 
+// 组件实例复用时（列表更新/切换 site），重置图片加载状态，避免旧站点的状态残留
+watch(() => props.site, () => {
+  isGen.value = false
+  imgLoaded.value = false
+})
+
 function handleFaviconError(site: Site) {
   isGen.value = true
   siteStore.setGroupIndex(props.groupIndex)

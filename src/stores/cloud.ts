@@ -28,7 +28,6 @@ export const useCloudStore = defineStore('cloud', () => {
   const connectError = ref('')
 
   // 限流提示（口令错误次数 / 锁定状态）
-  const remainingAttempts = ref<number | null>(null)
   const isLocked = ref(false)
   const lockRemainingSec = ref(0)
   const passwordHint = ref('')
