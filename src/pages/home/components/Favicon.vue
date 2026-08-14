@@ -8,24 +8,14 @@ const props = defineProps({
     type: Object as PropType<Site>,
     required: true,
   },
-  siteIndex: {
-    type: Number,
-    required: true,
-  },
-  groupIndex: {
-    type: Number,
-    required: true,
-  },
 })
-
-const siteStore = useSiteStore()
 
 const { iconStyle } = useIconStyle()
 
 const isGen = ref(false)
 const imgLoaded = ref(false)
 
-// 组件实例复用时（列表更新/切换 site），重置图片加载状态，避免旧站点的状态残留
+// ???????(????/?? site),????????,??????????
 watch(() => props.site, () => {
   isGen.value = false
   imgLoaded.value = false
@@ -33,14 +23,11 @@ watch(() => props.site, () => {
 
 function handleFaviconError(site: Site) {
   isGen.value = true
-  siteStore.setGroupIndex(props.groupIndex)
-  siteStore.setSiteIndex(props.siteIndex)
+  // ??????? site ??(??? store ???,?????),
+  // ?????? cateIndex/groupIndex/siteIndex ???????????????
   if (site.bgColor)
     return
-  siteStore.updateSite({
-    ...site,
-    bgColor: getRandomDarkColor(),
-  })
+  site.bgColor = getRandomDarkColor()
 }
 </script>
 

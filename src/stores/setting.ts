@@ -5,8 +5,20 @@ import type { Settings, SettingItem } from '@/types'
 export type SettingKey = keyof Settings
 
 export function loadSettings(): Settings | undefined {
-  const settings = localStorage.getItem('settings')
-  return settings ? JSON.parse(settings) : undefined
+  try {
+    const settings = localStorage.getItem('settings')
+    if (!settings)
+      return undefined
+    const parsed = JSON.parse(settings)
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed))
+      throw new Error('settings ??????')
+    return parsed
+  }
+  catch {
+    // ?????????,????? preset,??????
+    localStorage.removeItem('settings')
+    return undefined
+  }
 }
 
 export const settingData: { [K in SettingKey]: SettingItem<any>[] } = {

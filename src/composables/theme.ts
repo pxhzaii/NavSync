@@ -7,11 +7,14 @@ type ThemeVars<T extends Theme> = { [K in keyof T]: Ref<string> }
 
 const settingsCache = loadSettings()
 const defaultTheme: string = settingsCache ? settingsCache.theme : preset.settings.theme
+
 function camelToCssVar(str: string) {
   return `--${str.replace(/[A-Z]|[0-9]+/g, (match: string) => `-${match.toLowerCase()}`)}`
 }
 
-const currentTheme = themeList.find(item => item.enName === defaultTheme)!.value
+// ?????(???????)???? themeList ???(??),???????
+const defaultThemeItem = themeList.find(item => item.enName === defaultTheme) ?? themeList[0]
+const currentTheme = defaultThemeItem.value
 export const themeVars: ThemeVars<Theme> = Object.keys(
   currentTheme).reduce(
   (obj, key) => {
@@ -24,7 +27,10 @@ export const themeVars: ThemeVars<Theme> = Object.keys(
 ) as ThemeVars<Theme>
 
 export function toggleTheme(theme: string) {
-  const newTheme = themeList.find(item => item.enName === theme)!.value
+  const newTheme = themeList.find(item => item.enName === theme)?.value
+  // ?????(???????)???????,?? .value ?? undefined ??
+  if (!newTheme)
+    return
   for (const key in newTheme) {
     themeVars[key as ThemeVar].value = newTheme[key as ThemeVar]
   }

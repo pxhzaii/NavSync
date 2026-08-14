@@ -2,8 +2,20 @@ import preset from '@/preset.json'
 import type { Category, Group, Site } from '@/types'
 
 function loadData(): Category[] | undefined {
-  const data = localStorage.getItem('cache')
-  return data ? JSON.parse(data) : undefined
+  try {
+    const data = localStorage.getItem('cache')
+    if (!data)
+      return undefined
+    const parsed = JSON.parse(data)
+    if (!Array.isArray(parsed))
+      throw new Error('cache ??????')
+    return parsed
+  }
+  catch {
+    // ?????????,????? preset,??????
+    localStorage.removeItem('cache')
+    return undefined
+  }
 }
 export const useSiteStore = defineStore('site', () => {
   const data = ref<Category[]>(loadData() || preset.data)
