@@ -52,5 +52,5 @@ export function getFaviconUrl(url: string) {
     return optUrl
   }
   
-  return FAVICON_API + getDomainName(url) + '.ico'
+  return FAVICON_API + paramsUrl + '.ico'
 }

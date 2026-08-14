@@ -61,6 +61,7 @@ function exportData() {
   document.body.appendChild(a)
   a.click()
   URL.revokeObjectURL(url)
+  a.remove()
 }
 
 function importData() {
@@ -84,6 +85,7 @@ function importData() {
     }
   })
   inputElement.click()
+  inputElement.remove()
 }
 
 function resetData() {

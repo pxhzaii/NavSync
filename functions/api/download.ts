@@ -47,7 +47,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       return jsonResponse({ error: '云端数据为空或格式异常' }, 500)
     }
 
-    const cloudData = JSON.parse(file.content)
+    let cloudData
+    try {
+      cloudData = JSON.parse(file.content)
+    }
+    catch {
+      return jsonResponse({ error: '云端数据格式损坏，无法解析' }, 500)
+    }
     return jsonResponse({ success: true, data: cloudData })
   }
   catch (err: any) {

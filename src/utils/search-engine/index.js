@@ -15,11 +15,11 @@ const ENGINES = {
 }
 
 function target(eng, wd) {
-  return ENGINES[eng].target(wd);
+  return (ENGINES[eng] || ENGINES.Baidu).target(wd);
 }
 
 function complete(eng, wd, callback) {
-  return ENGINES[eng].complete(wd, callback);
+  return (ENGINES[eng] || ENGINES.Baidu).complete(wd, callback);
 }
 
 export default {

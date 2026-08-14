@@ -49,6 +49,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
       if (res.ok) {
         const gist = await res.json<any>()
+        if (!gist.id) {
+          return jsonResponse({ error: 'GitHub 返回数据异常，缺少 Gist ID' }, 500)
+        }
         return jsonResponse({ success: true, gistId: gist.id })
       }
 

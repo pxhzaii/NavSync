@@ -42,18 +42,14 @@ export const useSettingStore = defineStore('theme', () => {
   const settingCache = loadSettings()
   const presetSetting = preset.settings
   const settings = reactive<Settings>((() => {
-    if (settingCache) {
-      for (const key in presetSetting) {
-        if (!settingCache[key as SettingKey])
-          return Object.assign(presetSetting, settingCache)
-      }
-      return settingCache
-    }
-    return presetSetting
+    // 始终返回全新对象，避免直接引用 preset.settings 导致后续修改污染模块级常量
+    if (settingCache)
+      return { ...presetSetting, ...settingCache }
+    return { ...presetSetting }
   })())
 
   function getSettingItem(key: SettingKey) {
-    return settingData[key].find(item => item.enName === settings[key])!
+    return settingData[key].find(item => item.enName === settings[key]) ?? settingData[key][0]
   }
 
   function setSettings(newSettings: Partial<Settings>) {

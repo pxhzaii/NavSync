@@ -31,6 +31,9 @@ function getDate() {
 }
 
 function timing() {
+  // 先清理旧定时器，防止组件重新挂载时多个 interval 并行
+  if (timeInterval)
+    clearInterval(timeInterval)
   refreshTime()
   const nowMinute = time.value
   timeInterval = setInterval(() => {
