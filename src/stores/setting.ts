@@ -11,11 +11,11 @@ export function loadSettings(): Settings | undefined {
       return undefined
     const parsed = JSON.parse(settings)
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed))
-      throw new Error('settings ??????')
+      throw new Error('settings 数据格式异常')
     return parsed
   }
   catch {
-    // ?????????,????? preset,??????
+    // 设置数据损坏时清空，回退到默认 preset，避免应用白屏
     localStorage.removeItem('settings')
     return undefined
   }

@@ -8,11 +8,11 @@ function loadData(): Category[] | undefined {
       return undefined
     const parsed = JSON.parse(data)
     if (!Array.isArray(parsed))
-      throw new Error('cache ??????')
+      throw new Error('cache 数据格式异常')
     return parsed
   }
   catch {
-    // ?????????,????? preset,??????
+    // 缓存数据损坏时清空，回退到默认 preset，避免应用白屏
     localStorage.removeItem('cache')
     return undefined
   }

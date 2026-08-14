@@ -12,7 +12,7 @@ function camelToCssVar(str: string) {
   return `--${str.replace(/[A-Z]|[0-9]+/g, (match: string) => `-${match.toLowerCase()}`)}`
 }
 
-// ?????(???????)???? themeList ???(??),???????
+// 主题名非法（如云端数据异常）时回退到 themeList 第一项（月白），避免运行时崩溃
 const defaultThemeItem = themeList.find(item => item.enName === defaultTheme) ?? themeList[0]
 const currentTheme = defaultThemeItem.value
 export const themeVars: ThemeVars<Theme> = Object.keys(
@@ -28,7 +28,7 @@ export const themeVars: ThemeVars<Theme> = Object.keys(
 
 export function toggleTheme(theme: string) {
   const newTheme = themeList.find(item => item.enName === theme)?.value
-  // ?????(???????)???????,?? .value ?? undefined ??
+  // 非法主题值（如云端数据异常）时回退默认主题，避免 .value 访问 undefined 崩溃
   if (!newTheme)
     return
   for (const key in newTheme) {
