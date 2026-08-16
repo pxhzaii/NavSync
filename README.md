@@ -1,17 +1,8 @@
----
-AIGC:
-  ContentProducer: '001191110102MAD55U9H0F10002'
-  ContentPropagator: '001191110102MAD55U9H0F10002'
-  Label: '1'
-  ProduceID: 'e1566759-c8d0-40a0-9045-8e7f7a5b7b3b'
-  PropagateID: 'e1566759-c8d0-40a0-9045-8e7f7a5b7b3b'
-  ReservedCode1: '838bc00a-0dec-4dbc-927f-91c071b9effc'
-  ReservedCode2: '838bc00a-0dec-4dbc-927f-91c071b9effc'
----
+
 
 # NavSync
 
-一款极简的网址导航工具，支持云端同步。基于 Vue 3 + Vite + TypeScript 构建，部署在 Cloudflare Pages，采用 **favicon 代理 + KV 缓存** 架构。
+一款极简的网址导航工具，基于 [COME COME](https://github.com/hellojuantu/comecome) 由AI改进，支持云端同步。基于 Vue 3 + Vite + TypeScript 构建，部署在 Cloudflare Pages，采用 **favicon 代理 + KV 缓存** 架构。
 
 - 图标获取不再由浏览器直连第三方接口，而是走本站 Cloudflare Pages Functions 代理
 - 图标经后端拉取后写入 **Cloudflare KV** 缓存，同域名只回源一次，加载更快更稳
@@ -244,9 +235,8 @@ git push origin main
 | 网站标题 | `index.html` | 修改 `<title>` 标签内容 |
 | 默认搜索引擎 | `src/utils/types/search.ts` + `src/preset.json` | 列表顺序和 `preset.json` 中 `settings.search` 字段 |
 
-## 致谢
+## 致谢https://github.com/hellojuantu/comecome
+- [COME COME](https://github.com/hellojuantu/comecome)
+- [Moon-Web-Start](https://github.com/jic999/moon-web-start) 
+- [0x3](https://0x3.com) 
 
-- [Moon-Web-Start](https://github.com/jic999/moon-web-start) - 基础框架
-- [0x3](https://0x3.com) - 设计灵感
-
-> AI生成
