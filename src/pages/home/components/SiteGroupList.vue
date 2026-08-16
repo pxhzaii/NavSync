@@ -56,7 +56,7 @@ const renderStore = useRenderStore()
                 'group__header--setting': settingStore.isWhiteTheme,
                 'group__header--setting--colorful': !settingStore.isWhiteTheme,
                 'site--setting': settingStore.isSetting,
-              }" md="text-15" lg="text-15" shrink-0 whitespace-nowrap px-0 py-4 text-13 @click="handleGroupClick(i)" op-80 overflow-hidden ellipsis
+              }" md="text-15" lg="text-15" shrink-0 whitespace-nowrap px-0 py-4 text-13 op-80 overflow-hidden ellipsis @click="handleGroupClick(i)"
             >
               {{ group.name }}
             </span>
