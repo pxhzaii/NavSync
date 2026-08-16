@@ -78,7 +78,7 @@ function importData() {
         loadData(data)
       }
       catch (_error) {
-        window.$message.error('请导入合法的数据文件', { duration: 2000 })
+        window.$message?.error('请导入合法的数据文件', { duration: 2000 })
       }
     }
   })
@@ -97,7 +97,7 @@ function resetData() {
     const clonedPreset = JSON.parse(JSON.stringify(preset))
     const data = clonedPreset as CacheData
     loadData(data)
-    window.$message.success('重置成功', { duration: 2000 })
+    window.$message?.success('重置成功', { duration: 2000 })
   }
 }
 
