@@ -10,7 +10,7 @@ import {
  * 环境变量（在 Cloudflare Pages Dashboard > Settings > Environment variables 中设置）：
  *   WEBDAV_SERVER_URL  - 服务器地址（如 https://dav.jianguoyun.com/dav）
  *   WEBDAV_USERNAME    - 用户名
- *   WEBDAV_PASSWORD    - 密码（应用密码，仅在启用访问口令时返回）
+ *   WEBDAV_PASSWORD    - 密码（应用密码）
  *   WEBDAV_FILE_PATH   - 备份路径（默认 /navsync/backup.json）
  *   WEBDAV_PROXY       - 代理地址（留空则直连）
  *
@@ -30,8 +30,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       config.serverUrl = context.env.WEBDAV_SERVER_URL
     if (context.env.WEBDAV_USERNAME)
       config.username = context.env.WEBDAV_USERNAME
-    // 密码仅在启用访问口令保护时才返回（请求已通过口令校验，为合法用户）
-    if (context.env.WEBDAV_PASSWORD && context.env.CLOUD_PASSWORD)
+    if (context.env.WEBDAV_PASSWORD)
       config.password = context.env.WEBDAV_PASSWORD
     if (context.env.WEBDAV_FILE_PATH)
       config.filePath = context.env.WEBDAV_FILE_PATH
