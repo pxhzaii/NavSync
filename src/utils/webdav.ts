@@ -11,7 +11,7 @@ import type { Category, Settings } from '@/types'
  */
 
 export const WEBDAV_PROXY = 'https://webdav.5as.cn/api/webdav'
-export const WEBDAV_DEFAULT_PATH = '/navsync-backup.json'
+export const WEBDAV_DEFAULT_PATH = '/navsync/backup.json'
 
 /** 代理允许转发的目标域名白名单（来自 keyvault-webdav-proxy 源码） */
 const ALLOWED_HOSTS = [
@@ -74,7 +74,7 @@ export function setWebDavConfig(config: Partial<WebDavConfig>) {
   if (config.password !== undefined)
     localStorage.setItem(KEY_PASSWORD, config.password)
   if (config.filePath !== undefined)
-    localStorage.setItem(KEY_WEBDAV_PATH, config.filePath)
+    localStorage.setItem(KEY_WEBDAV_PATH, normalizeFilePath(config.filePath))
   if (config.proxy !== undefined)
     localStorage.setItem(KEY_PROXY, config.proxy)
 }
@@ -95,6 +95,21 @@ export function clearWebDavStorage() {
   localStorage.removeItem(KEY_WEBDAV_PATH)
   localStorage.removeItem(KEY_PROXY)
   localStorage.removeItem(KEY_LAST_BACKUP)
+}
+
+/** 规范化备份路径：确保路径含至少一层子目录
+ *  坚果云等 WebDAV 不允许直接在 /dav/ 根下放文件（返回 404），
+ *  需先创建子目录再 PUT。若路径在根目录下（如 /backup.json），
+ *  自动放入 /navsync/ 子目录。
+ */
+export function normalizeFilePath(filePath: string): string {
+  const clean = filePath.trim().replace(/\/{2,}/g, '/').replace(/\/+/g, '').replace(/^\/+/, '')
+  const segments = clean.split('/').filter(Boolean)
+  if (segments.length === 0)
+    return '/navsync/backup.json'
+  if (segments.length === 1)
+    return `/navsync/${segments[0]}`
+  return `/${clean}`
 }
 
 /** 构建 WebDAV 完整 URL（统一规范：base 无尾斜杠 + path 单前导斜杠，消除双斜杠差异） */

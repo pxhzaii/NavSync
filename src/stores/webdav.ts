@@ -4,6 +4,7 @@ import {
   clearWebDavStorage,
   getWebDavConfig,
   getWebDavLastBackup,
+  normalizeFilePath,
   restoreFromWebDav,
   setWebDavConfig,
   setWebDavLastBackup,
@@ -43,11 +44,14 @@ export const useWebDavStore = defineStore('webdav', () => {
   }
 
   function saveConfig() {
+    const normPath = normalizeFilePath(filePath.value)
+    if (normPath !== filePath.value)
+      filePath.value = normPath
     setWebDavConfig({
       serverUrl: serverUrl.value,
       username: username.value,
       password: password.value,
-      filePath: filePath.value,
+      filePath: normPath,
       proxy: proxy.value,
     })
   }

@@ -3,10 +3,10 @@ AIGC:
   ContentProducer: '001191110102MAD55U9H0F10002'
   ContentPropagator: '001191110102MAD55U9H0F10002'
   Label: '1'
-  ProduceID: '6dfc7c3f-6f2e-4e5e-907c-68106a09e980'
-  PropagateID: '6dfc7c3f-6f2e-4e5e-907c-68106a09e980'
-  ReservedCode1: '03cab83d-e5ba-4769-a538-84c1a5540f29'
-  ReservedCode2: '03cab83d-e5ba-4769-a538-84c1a5540f29'
+  ProduceID: '4b2f1be9-ba00-456e-ba9b-3118b9f7097d'
+  PropagateID: '4b2f1be9-ba00-456e-ba9b-3118b9f7097d'
+  ReservedCode1: '25319dba-af1d-45cf-a8e4-c0b2c0dd22e2'
+  ReservedCode2: '25319dba-af1d-45cf-a8e4-c0b2c0dd22e2'
 ---
 
 # NavSync
@@ -141,7 +141,7 @@ Cloudflare 会自动拉取代码、安装依赖、构建并部署。通常 2-3 �
 - **服务器地址**：填写你的 WebDAV 服务地址，如坚果云 `https://dav.jianguoyun.com/dav`（带或不带末尾斜杠均可，程序会自动规范化）
 - **代理地址**：留空表示浏览器**直连** WebDAV（需该服务支持 CORS，如坚果云）；填写自建代理地址（如 `https://webdav.5as.cn/api/webdav`，需实现 keyvault-webdav-proxy 的 `?url=&method=` 协议）可中转请求，规避 CF-to-CF 520 问题
 - **用户名 / 密码**：坚果云需使用「应用密码」（在坚果云官网 → 账户信息 → 安全选项 中生成），非登录密码
-- **备份路径**：默认 `/navsync-backup.json`，按需修改；若路径包含不存在的子目录（如 `/work/backup.json`），备份时会自动逐级创建父目录
+- **备份路径**：默认 `/navsync/backup.json`，按需修改；路径需包含至少一层子目录（坚果云不允许直接在 `/dav/` 根下放文件），若填根目录级路径会自动放入 `/navsync/` 子目录
 - 点击「测试连接」确认配置可用，然后「备份到 WebDAV」或「从 WebDAV 恢复」
 - 备份遇到 404/409 时会自动尝试创建父目录后重试；仍失败会给出具体原因提示
 
