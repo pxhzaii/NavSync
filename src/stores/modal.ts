@@ -40,12 +40,12 @@ export const useModalStore = defineStore('modal', () => {
   function showModal(actionType: ActionType, actionTarget: ActionTarget, groupIndex = -1, siteIndex = -1) {
     action.value = actionType
     target.value = actionTarget
-    if (groupIndex !== -1) {
+    if (groupIndex !== -1)
       siteStore.setGroupIndex(groupIndex)
-    }
-    if (siteIndex !== -1) {
+
+    if (siteIndex !== -1)
       siteStore.setSiteIndex(siteIndex)
-    }
+
     modalVisible.value = true
     // init inputs
     if (actionType === 'update') {
@@ -81,9 +81,9 @@ export const useModalStore = defineStore('modal', () => {
   }
   let isCommit = false
   function handleCommit() {
-    if (isCommit) {
+    if (isCommit)
       return
-    }
+
     isCommit = true
     now = Date.now()
     commitHandler[action.value][target.value]()
@@ -91,18 +91,22 @@ export const useModalStore = defineStore('modal', () => {
     setTimeout(() => isCommit = false, 1000)
   }
   function handleDelete() {
+    if (target.value === 'cate' && siteStore.data.length <= 1) {
+      window.$message?.warning('至少保留一个分类', { duration: 2000 })
+      modalVisible.value = false
+      return
+    }
+
     deleteHandler[target.value]()
     modalVisible.value = false
     // If delete a cate, cateIndex--
-    if (target.value === 'cate' && siteStore.cateIndex > 0) {
+    if (target.value === 'cate' && siteStore.cateIndex > 0)
       siteStore.setCateIndex(siteStore.cateIndex - 1)
-    }
   }
   function clearInput() {
     let key: keyof typeof inputValues
-    for (key in inputValues) {
+    for (key in inputValues)
       inputValues[key] = ''
-    }
   }
 
   return {
