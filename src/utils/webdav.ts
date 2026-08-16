@@ -97,13 +97,50 @@ export function clearWebDavStorage() {
   localStorage.removeItem(KEY_LAST_BACKUP)
 }
 
-/** 构建坚果云 WebDAV 完整 URL（serverUrl 可能带或不带 https:// 与结尾斜杠） */
+/** 构建 WebDAV 完整 URL（统一规范：base 无尾斜杠 + path 单前导斜杠，消除双斜杠差异） */
 function buildWebDavUrl(serverUrl: string, filePath: string): string {
   let base = serverUrl.trim().replace(/\/+$/, '')
   if (!/^https?:\/\//i.test(base))
     base = `https://${base}`
-  const path = filePath.trim().startsWith('/') ? filePath.trim() : `/${filePath.trim()}`
-  return base + path
+  // 路径规范化：去掉重复斜杠与尾部斜杠，统一单前导斜杠
+  const cleanPath = filePath.trim().replace(/\/{2,}/g, '/').replace(/\/+$/, '').replace(/^\/+/, '')
+  if (!cleanPath)
+    return base
+  return `${base}/${cleanPath}`
+}
+
+/** 提取备份路径的父目录列表（不含文件名），如 /a/b/f.json → ['/a', '/a/b'] */
+function getParentDirs(filePath: string): string[] {
+  const clean = filePath.trim().replace(/\/{2,}/g, '/').replace(/\/+$/, '')
+  const segments = clean.split('/').filter(Boolean)
+  if (segments.length <= 1)
+    return [] // 根目录下，无需创建父目录
+  const dirs: string[] = []
+  let cur = ''
+  for (let i = 0; i < segments.length - 1; i++) {
+    cur += `/${segments[i]}`
+    dirs.push(cur)
+  }
+  return dirs
+}
+
+/** 逐级创建备份路径的父目录（MKCOL），全部就绪返回空串，失败返回错误信息 */
+async function ensureParentDirs(config: WebDavConfig): Promise<string> {
+  const dirs = getParentDirs(config.filePath)
+  if (dirs.length === 0)
+    return ''
+  const base = buildWebDavUrl(config.serverUrl, '')
+  for (const dir of dirs) {
+    const res = await webDavFetch(`${base}${dir}`, 'MKCOL', config.username, config.password, config.proxy)
+    if (res.status >= 200 && res.status < 300)
+      continue // 创建成功
+    if (res.status === 405 || res.status === 301 || res.status === 302)
+      continue // 目录已存在
+    if (res.status === 409)
+      continue // 部分服务端对已存在目录也返回 409，继续尝试
+    return `父目录创建失败: ${dir} (HTTP ${res.status})`
+  }
+  return ''
 }
 
 /** 校验 serverUrl 是否合法（仅代理模式下做白名单校验） */
@@ -181,7 +218,7 @@ async function webDavFetch(url: string, method: string, username: string, passwo
 }
 
 /** 测试 WebDAV 连接（读取目标文件，成功即配置可用） */
-export async function testWebDavConnection(config: WebDavConfig): Promise<{ ok: boolean; error?: string }> {
+export async function testWebDavConnection(config: WebDavConfig): Promise<{ ok: boolean; error?: string; notice?: string }> {
   try {
     const url = buildWebDavUrl(config.serverUrl, config.filePath)
     const hostErr = validateServerUrl(config.serverUrl, config.proxy)
@@ -192,8 +229,13 @@ export async function testWebDavConnection(config: WebDavConfig): Promise<{ ok: 
       return { ok: true }
     if (result.status === 401 || result.status === 403)
       return { ok: false, error: '用户名或密码错误（401/403）' }
-    if (result.status === 404)
-      return { ok: true } // 文件不存在也视为连接正常（可创建）
+    if (result.status === 404) {
+      // 文件不存在视为连接正常；顺便预创建父目录，确保后续备份不因目录缺失而失败
+      const mkErr = await ensureParentDirs(config)
+      if (mkErr)
+        return { ok: true, notice: `连接正常，但父目录异常：${mkErr}` }
+      return { ok: true, notice: '连接正常（备份文件尚不存在，父目录已就绪，可直接备份）' }
+    }
     return { ok: false, error: `连接失败 (HTTP ${result.status})` }
   }
   catch (e: any) {
@@ -214,11 +256,26 @@ export async function backupToWebDav(data: Category[], settings: Settings, confi
       updatedAt: new Date().toISOString(),
       source: 'navsync-webdav',
     } satisfies WebDavBackup)
-    const res = await webDavFetch(url, 'PUT', config.username, config.password, config.proxy, body)
+    let res = await webDavFetch(url, 'PUT', config.username, config.password, config.proxy, body)
+
+    // 404/409：父目录可能不存在或路径冲突，自动逐级创建父目录后重试一次
+    if (res.status === 404 || res.status === 409) {
+      const mkErr = await ensureParentDirs(config)
+      if (mkErr)
+        return { success: false, error: mkErr }
+      res = await webDavFetch(url, 'PUT', config.username, config.password, config.proxy, body)
+    }
+
     if (res.status >= 200 && res.status < 300) {
       setWebDavLastBackup(new Date().toLocaleString())
       return { success: true }
     }
+    if (res.status === 404)
+      return { success: false, error: '备份失败 (HTTP 404)：目标路径的父目录不存在或无法访问，请检查备份路径' }
+    if (res.status === 409)
+      return { success: false, error: '备份失败 (HTTP 409)：目标位置存在同名文件夹或目录冲突，请更换备份路径' }
+    if (res.status === 429)
+      return { success: false, error: '备份失败 (HTTP 429)：请求过于频繁，请稍后再试' }
     return { success: false, error: `备份失败 (HTTP ${res.status})` }
   }
   catch (e: any) {

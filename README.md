@@ -3,10 +3,10 @@ AIGC:
   ContentProducer: '001191110102MAD55U9H0F10002'
   ContentPropagator: '001191110102MAD55U9H0F10002'
   Label: '1'
-  ProduceID: '1ce9f220-6d2d-47e5-bccb-0b6f64a5ffa2'
-  PropagateID: '1ce9f220-6d2d-47e5-bccb-0b6f64a5ffa2'
-  ReservedCode1: '7f20b87b-6319-4126-be8f-37b8e4312c24'
-  ReservedCode2: '7f20b87b-6319-4126-be8f-37b8e4312c24'
+  ProduceID: '6dfc7c3f-6f2e-4e5e-907c-68106a09e980'
+  PropagateID: '6dfc7c3f-6f2e-4e5e-907c-68106a09e980'
+  ReservedCode1: '03cab83d-e5ba-4769-a538-84c1a5540f29'
+  ReservedCode2: '03cab83d-e5ba-4769-a538-84c1a5540f29'
 ---
 
 # NavSync
@@ -138,11 +138,12 @@ Cloudflare 会自动拉取代码、安装依赖、构建并部署。通常 2-3 �
 
 进入 **设置 → 云端同步**，云端同步验证通过后可见「WebDAV 备份」区块：
 
-- **服务器地址**：填写你的 WebDAV 服务地址，如坚果云 `https://dav.jianguoyun.com/dav`
+- **服务器地址**：填写你的 WebDAV 服务地址，如坚果云 `https://dav.jianguoyun.com/dav`（带或不带末尾斜杠均可，程序会自动规范化）
 - **代理地址**：留空表示浏览器**直连** WebDAV（需该服务支持 CORS，如坚果云）；填写自建代理地址（如 `https://webdav.5as.cn/api/webdav`，需实现 keyvault-webdav-proxy 的 `?url=&method=` 协议）可中转请求，规避 CF-to-CF 520 问题
 - **用户名 / 密码**：坚果云需使用「应用密码」（在坚果云官网 → 账户信息 → 安全选项 中生成），非登录密码
-- **备份路径**：默认 `/navsync-backup.json`，按需修改
+- **备份路径**：默认 `/navsync-backup.json`，按需修改；若路径包含不存在的子目录（如 `/work/backup.json`），备份时会自动逐级创建父目录
 - 点击「测试连接」确认配置可用，然后「备份到 WebDAV」或「从 WebDAV 恢复」
+- 备份遇到 404/409 时会自动尝试创建父目录后重试；仍失败会给出具体原因提示
 
 > 代理模式下服务器地址仅支持白名单域名：`dav.jianguoyun.com`、`webdav.pcloud.com`、`webdav.hidrive.strato.com`、`dav.infini-cloud.net`；直连模式不受限。
 > 账号密码仅保存在浏览器 localStorage，不会上传到你的服务器。

@@ -10,6 +10,7 @@ const webdavStore = useWebDavStore()
     </div>
     <div mb-10 text-12 opacity-60>
       通过 WebDAV 服务备份当前配置。可经自建代理中转（避免 CF 520），也可直连。
+      服务器地址建议填写 <code>https://dav.jianguoyun.com/dav</code>（带或不带末尾斜杠均可）。
     </div>
 
     <n-form label-placement="left" label-width="90">

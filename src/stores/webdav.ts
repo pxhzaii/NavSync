@@ -73,7 +73,7 @@ export const useWebDavStore = defineStore('webdav', () => {
     isTesting.value = false
     if (result.ok) {
       saveConfig()
-      window.$message?.success('WebDAV 连接成功', { duration: 3000 })
+      window.$message?.success(result.notice || 'WebDAV 连接成功', { duration: 4000 })
     }
     else {
       window.$message?.error(result.error || '连接失败', { duration: 3000 })
