@@ -15,9 +15,8 @@ function handleSiteClick(url: string, groupIndex: number, siteIndex: number, e: 
 }
 
 function handleGroupClick(groupIndex: number) {
-  if (route.name === 'setting') {
+  if (route.name === 'setting')
     modalStore.showModal('update', 'group', groupIndex)
-  }
 }
 
 const addGroupVisible = computed(() => route.name === 'setting' && siteStore.data.length > 0)
@@ -43,18 +42,22 @@ const renderStore = useRenderStore()
       @end="handleEnd"
     >
       <template #item="{ element: group, index: i }: { element: Group, index: number }">
-        <div :class="{
-            'group__header--line': siteStore.data[siteStore.cateIndex].groupList.length !== i + 1
+        <div
+          :class="{
+            'group__header--line': siteStore.data[siteStore.cateIndex].groupList.length !== i + 1,
           }"
-          flex style="align-items: center;">
+          flex style="align-items: center;"
+        >
           <!-- Group header -->
           <div class="group__header--all" grid justify-start>
-            <span class="group__handle" @click="handleGroupClick(i)" :class="{
+            <span
+              class="group__handle" :class="{
                 'cursor-pointer': settingStore.isSetting,
                 'group__header--setting': settingStore.isWhiteTheme,
                 'group__header--setting--colorful': !settingStore.isWhiteTheme,
-                'site--setting': settingStore.isSetting,                
-              }" shrink-0 px-0 py-4 whitespace-nowrap ellipsis text-13 md="text-15" lg="text-15" op-80 overflow-hidden>
+                'site--setting': settingStore.isSetting,
+              }" md="text-15" lg="text-15" shrink-0 whitespace-nowrap px-0 py-4 text-13 @click="handleGroupClick(i)" op-80 overflow-hidden ellipsis
+            >
               {{ group.name }}
             </span>
           </div>
@@ -72,10 +75,10 @@ const renderStore = useRenderStore()
                 class: 'grid gap-8 grid-cols-3 md:gap-12 lg:gap-12 xl:gap-12 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-6',
               }"
               v-bind="draggableOptions"
-              @start="handleStart"
-              @end="handleEnd"
               flex
               style="flex: 0 0 100%;"
+              @start="handleStart"
+              @end="handleEnd"
             >
               <template #item="{ element: site, index }: { element: Site, index: number }">
                 <div>
@@ -85,11 +88,11 @@ const renderStore = useRenderStore()
                     :class="{ 'site--setting': settingStore.isSetting, 'hover:bg-$site-hover-c': !settingStore.isDragging }"
                     :href="site.url" target="_blank"
                     inline-flex cursor-pointer items-center gap-x-4 px-4 py-4 max-w-100p
-                    @click="e => handleSiteClick(site.url, i, index, e)"
                     style="margin: 0 2px;"
+                    @click="e => handleSiteClick(site.url, i, index, e)"
                   >
-                    <Favicon class="shrink-0" :site="site" :site-index="index" :group-index="i" />
-                    <span ellipsis whitespace-nowrap text-14 md="text-15" lg="text-15" overflow-hidden>{{ site.name }}</span>
+                    <Favicon class="shrink-0" :site="site" />
+                    <span md="text-15" lg="text-15" whitespace-nowrap text-14 overflow-hidden ellipsis>{{ site.name }}</span>
                   </a>
                 </div>
               </template>
@@ -174,9 +177,5 @@ const renderStore = useRenderStore()
   .group__header--line {
     margin-bottom: 4rem;
   }
-
-  // .group__setting--all {
-  //   padding-top: 3.5rem;
-  // }
 }
 </style>
