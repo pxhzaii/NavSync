@@ -1,13 +1,13 @@
 import {
-  uploadToCloud,
+  clearCloudStorage,
   downloadFromCloud,
-  validatePassword,
   fetchCloudStatus,
   fetchUserInfo,
-  clearCloudStorage,
   getCloudStatus,
-  isPasswordAuthed,
   getStoredPassword,
+  isPasswordAuthed,
+  uploadToCloud,
+  validatePassword,
 } from '@/utils/cloud'
 
 export const useCloudStore = defineStore('cloud', () => {
@@ -40,9 +40,8 @@ export const useCloudStore = defineStore('cloud', () => {
     lockRemainingSec.value = seconds
     lockTimer = setInterval(() => {
       lockRemainingSec.value -= 1
-      if (lockRemainingSec.value <= 0) {
+      if (lockRemainingSec.value <= 0)
         stopLockCountdown()
-      }
     }, 1000)
   }
 
@@ -87,9 +86,8 @@ export const useCloudStore = defineStore('cloud', () => {
     // 如果非口令模式，获取用户信息（验证 Token 有效性）
     if (!status.passwordMode) {
       const user = await fetchUserInfo()
-      if (user.valid) {
+      if (user.valid)
         username.value = user.username || ''
-      }
     }
 
     isConnecting.value = false
@@ -201,20 +199,25 @@ export const useCloudStore = defineStore('cloud', () => {
   }
 
   function handleDisconnect() {
-    if (!window.confirm('确定要断开云端同步吗？断开后需要重新验证。')) {
-      return
-    }
-    clearCloudStorage()
-    username.value = ''
-    lastSyncTime.value = ''
-    passwordInput.value = ''
-    passwordAuthed.value = false
-    isConnected.value = false
-    connectError.value = ''
-    cloudStatus.value = getCloudStatus()
-    stopLockCountdown()
-    passwordHint.value = ''
-    window.$message?.success('已断开云端同步', { duration: 3000 })
+    window.$dialog?.warning({
+      title: '断开云端同步',
+      content: '确定要断开云端同步吗？断开后需要重新验证。',
+      positiveText: '确定',
+      negativeText: '取消',
+      onPositiveClick: () => {
+        clearCloudStorage()
+        username.value = ''
+        lastSyncTime.value = ''
+        passwordInput.value = ''
+        passwordAuthed.value = false
+        isConnected.value = false
+        connectError.value = ''
+        cloudStatus.value = getCloudStatus()
+        stopLockCountdown()
+        passwordHint.value = ''
+        window.$message?.success('已断开云端同步', { duration: 3000 })
+      },
+    })
   }
 
   return {
