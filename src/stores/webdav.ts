@@ -44,7 +44,9 @@ export const useWebDavStore = defineStore('webdav', () => {
       serverUrl.value = server.serverUrl
     if (!username.value && server.username)
       username.value = server.username
-    // 密码不再从服务端自动填充，需用户自行输入
+    // 密码仅在服务端启用访问口令保护时才会返回（安全已由口令保障）
+    if (!password.value && server.password)
+      password.value = server.password
     if ((filePath.value === WEBDAV_DEFAULT_PATH || !filePath.value) && server.filePath)
       filePath.value = server.filePath
     if (!proxy.value && server.proxy !== undefined)
