@@ -30,3 +30,7 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+
+# Agent workspace temp files
+.temp/
+*.jpg

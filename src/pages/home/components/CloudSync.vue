@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WebDavSync from './WebDavSync.vue'
+
 const cloudStore = useCloudStore()
 </script>
 
@@ -25,7 +27,9 @@ const cloudStore = useCloudStore()
     <!-- 已连接：口令模式 -->
     <template v-if="cloudStore.isConnected && cloudStore.passwordMode">
       <div mb-16>
-        <div text-14 mb-10>访问口令</div>
+        <div mb-10 text-14>
+          访问口令
+        </div>
         <div v-if="!cloudStore.passwordAuthed" flex gap-x-8>
           <n-input
             v-model:value="cloudStore.passwordInput"
@@ -44,7 +48,7 @@ const cloudStore = useCloudStore()
           </n-button>
         </div>
         <!-- 锁定状态：显示锁定提示（互斥，避免与 passwordHint 重复） -->
-        <div v-if="cloudStore.isLocked" mt-8 text-12 style="color: #d03050;" flex items-center gap-x-4>
+        <div v-if="cloudStore.isLocked" style="color: #d03050;" mt-8 flex items-center gap-x-4 text-12>
           <span i-carbon:warning-alt />
           <span>已锁定，{{ cloudStore.formatLockTime(cloudStore.lockRemainingSec) }} 后自动解锁</span>
         </div>
@@ -52,7 +56,7 @@ const cloudStore = useCloudStore()
         <div v-if="!cloudStore.passwordAuthed && cloudStore.passwordHint && !cloudStore.isLocked" mt-8 text-12 style="color: #d03050;">
           {{ cloudStore.passwordHint }}
         </div>
-        <div v-if="cloudStore.passwordAuthed" text-12 opacity-70 flex items-center gap-x-8>
+        <div v-if="cloudStore.passwordAuthed" flex items-center gap-x-8 text-12 opacity-70>
           <span i-carbon:checkmark-filled style="color: #18a058;" />
           <span>口令已验证</span>
         </div>
@@ -61,7 +65,7 @@ const cloudStore = useCloudStore()
 
     <!-- 已连接：非口令模式 -->
     <template v-if="cloudStore.isConnected && !cloudStore.passwordMode">
-      <div v-if="cloudStore.username" mb-16 text-12 opacity-70 flex items-center gap-x-8>
+      <div v-if="cloudStore.username" mb-16 flex items-center gap-x-8 text-12 opacity-70>
         <span i-carbon:checkmark-filled style="color: #18a058;" />
         <span>已连接，用户: {{ cloudStore.username }}</span>
       </div>
@@ -69,7 +73,7 @@ const cloudStore = useCloudStore()
 
     <!-- 口令验证通过 或 非口令模式：显示同步按钮 -->
     <div v-if="cloudStore.isConnected && (cloudStore.passwordAuthed || !cloudStore.passwordMode)" mb-16>
-      <div v-if="cloudStore.lastSyncTime" text-12 mb-8 opacity-60>
+      <div v-if="cloudStore.lastSyncTime" mb-8 text-12 opacity-60>
         上次同步: {{ cloudStore.lastSyncTime }}
       </div>
       <div flex gap-x-12>
@@ -95,10 +99,12 @@ const cloudStore = useCloudStore()
           断开
         </n-button>
       </div>
+      <!-- WebDAV 备份（需云端同步验证通过后可见） -->
+      <WebDavSync mt-16 />
     </div>
 
     <!-- 使用说明 -->
-    <div text-12 opacity-50 mt-12>
+    <div mt-12 text-12 opacity-50>
       <template v-if="cloudStore.passwordMode">
         <div>同步原理：输入口令后，配置数据通过服务端代理存储在 GitHub Gist 中。</div>
         <div>换设备时只需重新连接并输入同一口令即可恢复配置。</div>
