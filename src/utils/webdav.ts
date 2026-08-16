@@ -1,12 +1,12 @@
 import type { Category, Settings } from '@/types'
 
 /**
- * WebDAV 备份（通过 keyvault-webdav-proxy 代理访问坚果云等 WebDAV 服务）
+ * WebDAV 备份（支持代理 / 直连两种模式）
  *
  * 原理：
- *   - 浏览器直接调用自建代理 https://webdav.5as.cn/api/webdav
- *   - 代理将请求转发到目标 WebDAV 服务器（如坚果云 dav.jianguoyun.com），
- *     避免 CF-to-CF 520 问题
+ *   - 代理模式：浏览器调用自建代理（如 keyvault-webdav-proxy），代理转发到
+ *     目标 WebDAV 服务器（如坚果云 dav.jianguoyun.com），避免 CF-to-CF 520
+ *   - 直连模式：代理地址留空时，浏览器直接请求目标 WebDAV（需服务器支持 CORS）
  *   - 数据以 JSON 格式备份到 WebDAV 的指定路径（默认 /navsync-backup.json）
  */
 
@@ -35,6 +35,7 @@ const KEY_WEBDAV_URL = 'webdav_url'
 const KEY_USER = 'webdav_user'
 const KEY_PASSWORD = 'webdav_password'
 const KEY_WEBDAV_PATH = 'webdav_path'
+const KEY_PROXY = 'webdav_proxy'
 const KEY_LAST_BACKUP = 'webdav_last_backup'
 
 export interface WebDavConfig {
@@ -42,6 +43,8 @@ export interface WebDavConfig {
   username: string
   password: string
   filePath: string
+  /** 代理地址，留空表示直连 WebDAV */
+  proxy: string
 }
 
 export interface WebDavBackupData {
@@ -59,6 +62,7 @@ export function getWebDavConfig(): WebDavConfig {
     username: localStorage.getItem(KEY_USER) || '',
     password: localStorage.getItem(KEY_PASSWORD) || '',
     filePath: localStorage.getItem(KEY_WEBDAV_PATH) || WEBDAV_DEFAULT_PATH,
+    proxy: localStorage.getItem(KEY_PROXY) || WEBDAV_PROXY,
   }
 }
 
@@ -71,6 +75,8 @@ export function setWebDavConfig(config: Partial<WebDavConfig>) {
     localStorage.setItem(KEY_PASSWORD, config.password)
   if (config.filePath !== undefined)
     localStorage.setItem(KEY_WEBDAV_PATH, config.filePath)
+  if (config.proxy !== undefined)
+    localStorage.setItem(KEY_PROXY, config.proxy)
 }
 
 export function getWebDavLastBackup(): string {
@@ -87,6 +93,7 @@ export function clearWebDavStorage() {
   localStorage.removeItem(KEY_USER)
   localStorage.removeItem(KEY_PASSWORD)
   localStorage.removeItem(KEY_WEBDAV_PATH)
+  localStorage.removeItem(KEY_PROXY)
   localStorage.removeItem(KEY_LAST_BACKUP)
 }
 
@@ -99,16 +106,22 @@ function buildWebDavUrl(serverUrl: string, filePath: string): string {
   return base + path
 }
 
-/** 校验 serverUrl 是否为代理白名单域名（避免 405/无效转发） */
-function validateServerUrl(serverUrl: string): string {
+/** 校验 serverUrl 是否合法（仅代理模式下做白名单校验） */
+function validateServerUrl(serverUrl: string, proxy: string): string {
   const base = serverUrl.trim().replace(/\/+$/, '')
   const host = base.replace(/^https?:\/\//i, '').split('/')[0].split(':')[0].toLowerCase()
+  // 直连模式不做白名单限制，只要求填了地址
+  if (!proxy.trim()) {
+    if (!host)
+      return '请填写正确的 WebDAV 服务器地址'
+    return ''
+  }
   if (!ALLOWED_HOSTS.includes(host))
     return `服务器地址不在代理白名单内（支持: ${ALLOWED_HOSTS.join(', ')}）`
   return ''
 }
 
-/** 调用 WebDAV 代理（返回包装 JSON） */
+/** 调用 WebDAV（代理模式走 keyvault-webdav-proxy，直连模式直接请求目标） */
 interface ProxyResponse {
   status: number
   headers?: Record<string, string>
@@ -116,28 +129,51 @@ interface ProxyResponse {
   error?: string
 }
 
-async function proxyFetch(url: string, method: string, username: string, password: string, body?: string): Promise<ProxyResponse> {
+/** ArrayBuffer → base64（直连 GET 时复用） */
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i++)
+    binary += String.fromCharCode(bytes[i])
+  return btoa(binary)
+}
+
+async function webDavFetch(url: string, method: string, username: string, password: string, proxy: string, body?: string): Promise<ProxyResponse> {
   const headers = new Headers()
   headers.set('Authorization', `Basic ${utf8ToBase64(`${username}:${password}`)}`)
   if (body !== undefined)
     headers.set('Content-Type', 'application/octet-stream')
 
-  // 通过代理 URL 传递目标地址与方法
-  const proxyUrl = `${WEBDAV_PROXY}?url=${encodeURIComponent(url)}&method=${encodeURIComponent(method)}`
-  const init: RequestInit = {
-    method: 'POST', // 代理统一用 POST（实际方法在 query 里）
-    headers,
-    body: body !== undefined ? body : undefined,
-  }
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 30_000)
   try {
-    const res = await fetch(proxyUrl, { ...init, signal: controller.signal })
-    const data = await res.json() as ProxyResponse
-    return data
+    // 代理模式：统一 POST 到代理，目标地址与方法放在 query
+    if (proxy) {
+      const proxyUrl = `${proxy}?url=${encodeURIComponent(url)}&method=${encodeURIComponent(method)}`
+      const res = await fetch(proxyUrl, {
+        method: 'POST',
+        headers,
+        body: body !== undefined ? body : undefined,
+        signal: controller.signal,
+      })
+      const data = await res.json() as ProxyResponse
+      return data
+    }
+    // 直连模式：直接请求目标 WebDAV
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: body !== undefined ? body : undefined,
+      signal: controller.signal,
+    })
+    if (method === 'GET' || method === 'HEAD') {
+      const buf = await res.arrayBuffer()
+      return { status: res.status, bodyB64: arrayBufferToBase64(buf) }
+    }
+    return { status: res.status }
   }
   catch (e: any) {
-    throw new Error(e?.name === 'AbortError' ? '请求超时，请检查网络或代理服务' : '网络错误，无法连接 WebDAV 代理')
+    throw new Error(e?.name === 'AbortError' ? '请求超时，请检查网络或代理服务' : '网络错误，无法连接 WebDAV')
   }
   finally {
     clearTimeout(timeoutId)
@@ -148,10 +184,10 @@ async function proxyFetch(url: string, method: string, username: string, passwor
 export async function testWebDavConnection(config: WebDavConfig): Promise<{ ok: boolean; error?: string }> {
   try {
     const url = buildWebDavUrl(config.serverUrl, config.filePath)
-    const hostErr = validateServerUrl(config.serverUrl)
+    const hostErr = validateServerUrl(config.serverUrl, config.proxy)
     if (hostErr)
       return { ok: false, error: hostErr }
-    const result = await proxyFetch(url, 'GET', config.username, config.password)
+    const result = await webDavFetch(url, 'GET', config.username, config.password, config.proxy)
     if (result.status >= 200 && result.status < 300)
       return { ok: true }
     if (result.status === 401 || result.status === 403)
@@ -169,7 +205,7 @@ export async function testWebDavConnection(config: WebDavConfig): Promise<{ ok: 
 export async function backupToWebDav(data: Category[], settings: Settings, config: WebDavConfig): Promise<{ success: boolean; error?: string }> {
   try {
     const url = buildWebDavUrl(config.serverUrl, config.filePath)
-    const hostErr = validateServerUrl(config.serverUrl)
+    const hostErr = validateServerUrl(config.serverUrl, config.proxy)
     if (hostErr)
       return { success: false, error: hostErr }
     const body = JSON.stringify({
@@ -178,7 +214,7 @@ export async function backupToWebDav(data: Category[], settings: Settings, confi
       updatedAt: new Date().toISOString(),
       source: 'navsync-webdav',
     } satisfies WebDavBackup)
-    const res = await proxyFetch(url, 'PUT', config.username, config.password, body)
+    const res = await webDavFetch(url, 'PUT', config.username, config.password, config.proxy, body)
     if (res.status >= 200 && res.status < 300) {
       setWebDavLastBackup(new Date().toLocaleString())
       return { success: true }
@@ -194,10 +230,10 @@ export async function backupToWebDav(data: Category[], settings: Settings, confi
 export async function restoreFromWebDav(config: WebDavConfig): Promise<{ success: boolean; data?: WebDavBackup; error?: string }> {
   try {
     const url = buildWebDavUrl(config.serverUrl, config.filePath)
-    const hostErr = validateServerUrl(config.serverUrl)
+    const hostErr = validateServerUrl(config.serverUrl, config.proxy)
     if (hostErr)
       return { success: false, error: hostErr }
-    const res = await proxyFetch(url, 'GET', config.username, config.password)
+    const res = await webDavFetch(url, 'GET', config.username, config.password, config.proxy)
     if (res.status === 404)
       return { success: false, error: '云端备份不存在，请先执行一次备份' }
     if (res.status !== 200)

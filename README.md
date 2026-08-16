@@ -1,3 +1,13 @@
+---
+AIGC:
+  ContentProducer: '001191110102MAD55U9H0F10002'
+  ContentPropagator: '001191110102MAD55U9H0F10002'
+  Label: '1'
+  ProduceID: '1ce9f220-6d2d-47e5-bccb-0b6f64a5ffa2'
+  PropagateID: '1ce9f220-6d2d-47e5-bccb-0b6f64a5ffa2'
+  ReservedCode1: '7f20b87b-6319-4126-be8f-37b8e4312c24'
+  ReservedCode2: '7f20b87b-6319-4126-be8f-37b8e4312c24'
+---
 
 # NavSync
 
@@ -24,6 +34,7 @@ NavSync 旨在为用户提供纯粹、简洁、高效的上网体验。它保留
 - **跨设备自动同步**（换设备后自动查找云端已有配置，无需手动同步 ID）
 - **Favicon 懒加载**（图标异步加载、骨架占位、加载失败回退首字母彩色图标）
 - **Favicon 代理 + KV 缓存**（后端统一代理第三方图标源，KV 缓存 30 天，同一域名仅回源一次）
+- **WebDAV 备份**（可选经自建代理中转或直连坚果云等 WebDAV，备份 / 恢复本地配置）
 
 
 ## 一键部署
@@ -122,6 +133,19 @@ Cloudflare 会自动拉取代码、安装依赖、构建并部署。通常 2-3 �
 
 > 如果未设置 `CLOUD_PASSWORD` 环境变量，则无需口令即可同步（不推荐，任何人都能操作）。
 > 连续 5 次口令错误后，该 IP 将被锁定 15 分钟。
+
+### WebDAV 备份说明
+
+进入 **设置 → 云端同步**，云端同步验证通过后可见「WebDAV 备份」区块：
+
+- **服务器地址**：填写你的 WebDAV 服务地址，如坚果云 `https://dav.jianguoyun.com/dav`
+- **代理地址**：留空表示浏览器**直连** WebDAV（需该服务支持 CORS，如坚果云）；填写自建代理地址（如 `https://webdav.5as.cn/api/webdav`，需实现 keyvault-webdav-proxy 的 `?url=&method=` 协议）可中转请求，规避 CF-to-CF 520 问题
+- **用户名 / 密码**：坚果云需使用「应用密码」（在坚果云官网 → 账户信息 → 安全选项 中生成），非登录密码
+- **备份路径**：默认 `/navsync-backup.json`，按需修改
+- 点击「测试连接」确认配置可用，然后「备份到 WebDAV」或「从 WebDAV 恢复」
+
+> 代理模式下服务器地址仅支持白名单域名：`dav.jianguoyun.com`、`webdav.pcloud.com`、`webdav.hidrive.strato.com`、`dav.infini-cloud.net`；直连模式不受限。
+> 账号密码仅保存在浏览器 localStorage，不会上传到你的服务器。
 
 ## 环境变量速查
 
@@ -223,5 +247,6 @@ git push origin main
 ## 致谢https://github.com/hellojuantu/comecome
 - [COME COME](https://github.com/hellojuantu/comecome)
 - [Moon-Web-Start](https://github.com/jic999/moon-web-start) 
-- [0x3](https://0x3.com) 
+- [0x3](https://0x3.com)
 
+> AI生成

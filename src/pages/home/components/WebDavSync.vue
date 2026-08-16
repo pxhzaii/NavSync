@@ -9,7 +9,7 @@ const webdavStore = useWebDavStore()
       <span text-14 font-bold>WebDAV 备份</span>
     </div>
     <div mb-10 text-12 opacity-60>
-      通过坚果云等 WebDAV 服务备份当前配置（经自建代理中转，避免 CF 520）。
+      通过 WebDAV 服务备份当前配置。可经自建代理中转（避免 CF 520），也可直连。
     </div>
 
     <n-form label-placement="left" label-width="90">
@@ -17,6 +17,12 @@ const webdavStore = useWebDavStore()
         <n-input
           v-model:value="webdavStore.serverUrl"
           placeholder="https://dav.jianguoyun.com/dav"
+        />
+      </n-form-item>
+      <n-form-item label="代理地址">
+        <n-input
+          v-model:value="webdavStore.proxy"
+          placeholder="https://webdav.5as.cn/api/webdav（留空则直连）"
         />
       </n-form-item>
       <n-form-item label="用户名">
@@ -80,7 +86,7 @@ const webdavStore = useWebDavStore()
     </div>
 
     <div mt-12 text-12 opacity-50>
-      密码仅保存在浏览器本地，用于请求时拼接 Basic 认证，不会上传到服务器。
+      代理地址留空时直连 WebDAV 服务器（需服务器支持 CORS）；账号密码仅保存在浏览器本地，不会上传到服务器。
     </div>
   </div>
 </template>

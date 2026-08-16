@@ -17,6 +17,7 @@ export const useWebDavStore = defineStore('webdav', () => {
   const username = ref('')
   const password = ref('')
   const filePath = ref(WEBDAV_DEFAULT_PATH)
+  const proxy = ref('')
 
   // 操作状态
   const isTesting = ref(false)
@@ -29,6 +30,7 @@ export const useWebDavStore = defineStore('webdav', () => {
   serverUrl.value = saved.serverUrl
   username.value = saved.username
   filePath.value = saved.filePath || WEBDAV_DEFAULT_PATH
+  proxy.value = saved.proxy
 
   function getConfig(): WebDavConfig {
     return {
@@ -36,6 +38,7 @@ export const useWebDavStore = defineStore('webdav', () => {
       username: username.value.trim(),
       password: password.value,
       filePath: filePath.value.trim() || WEBDAV_DEFAULT_PATH,
+      proxy: proxy.value.trim(),
     }
   }
 
@@ -45,6 +48,7 @@ export const useWebDavStore = defineStore('webdav', () => {
       username: username.value,
       password: password.value,
       filePath: filePath.value,
+      proxy: proxy.value,
     })
   }
 
@@ -148,6 +152,7 @@ export const useWebDavStore = defineStore('webdav', () => {
     username.value = ''
     password.value = ''
     filePath.value = WEBDAV_DEFAULT_PATH
+    proxy.value = ''
     lastBackup.value = ''
     window.$message?.success('已清除 WebDAV 配置', { duration: 3000 })
   }
@@ -157,6 +162,7 @@ export const useWebDavStore = defineStore('webdav', () => {
     username,
     password,
     filePath,
+    proxy,
     isTesting,
     isBackingUp,
     isRestoring,
