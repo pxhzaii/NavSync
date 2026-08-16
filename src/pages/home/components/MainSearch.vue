@@ -20,7 +20,8 @@ const selectedIndex = ref(0)
 const searchInputRef = ref<HTMLInputElement>()
 
 function initCurrentIndex() {
-  currentIndex.value = searchList.findIndex(search => search.enName === settingStore.settings.search) || 0
+  const idx = searchList.findIndex(search => search.enName === settingStore.settings.search)
+  currentIndex.value = idx >= 0 ? idx : 0
 }
 
 watch(() => settingStore.settings.search, () => {
