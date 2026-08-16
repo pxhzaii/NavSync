@@ -7,11 +7,10 @@ const siteStore = useSiteStore()
 const route = useRoute()
 
 function handleCateClick(cateIndex: number) {
-  if (route.name === 'setting' && siteStore.cateIndex === cateIndex) {
+  if (route.name === 'setting' && siteStore.cateIndex === cateIndex)
     modalStore.showModal('update', 'cate')
-  } else {
+  else
     siteStore.setCateIndex(cateIndex)
-  }
 }
 
 const settingStore = useSettingStore()
@@ -24,27 +23,27 @@ function handleDragEnd(e: any) {
   const { cateIndex } = siteStore
   if (oldIndex === cateIndex && newIndex !== cateIndex) {
     siteStore.setCateIndex(newIndex)
-  } else {
-    if ((oldIndex < cateIndex && newIndex < cateIndex) ||
-          (oldIndex > cateIndex && newIndex > cateIndex)) {
+  }
+  else {
+    if ((oldIndex < cateIndex && newIndex < cateIndex)
+          || (oldIndex > cateIndex && newIndex > cateIndex))
       return
-    }
 
-    if (oldIndex < cateIndex) {
+    if (oldIndex < cateIndex)
       siteStore.setCateIndex(cateIndex - 1)
-    } else if (oldIndex > cateIndex) {
+    else if (oldIndex > cateIndex)
       siteStore.setCateIndex(cateIndex + 1)
-    }
   }
 }
 </script>
 
 <template>
-  <section 
+  <section
     :class="{
-      'nav__items': !settingStore.isSetting
+      nav__items: !settingStore.isSetting,
     }"
-    flex-center text-14 pb-16 md="text-15 pb-32" lg="text-15 pb-32">
+    flex-center pb-16 text-14 md="text-15 pb-32" lg="text-15 pb-32"
+  >
     <draggable
       class="flex gap-x-12"
       :list="siteStore.data"
@@ -54,13 +53,12 @@ function handleDragEnd(e: any) {
         type: 'transition-group',
       }"
       v-bind="draggableOptions"
+      style="overflow: scroll; white-space: nowrap;"
       @start="handleStart"
       @end="handleDragEnd"
-      style="overflow: scroll; white-space: nowrap;"
     >
       <template #item="{ element: cate, index: i }: { element: Category, index: number }">
         <div
-          class="dragging"
           :class="{
             // white setting
             'text-$primary-light-c hover:text-$text-c': siteStore.cateIndex !== i && settingStore.isWhiteTheme,
@@ -73,23 +71,23 @@ function handleDragEnd(e: any) {
             'site--select': siteStore.cateIndex === i && settingStore.isSetting,
           }"
           border="b-2 transparent"
-          cursor-pointer transition-color duration-300 p-4 shrink-0
-          v-on:click.native="handleCateClick(i)"
+          shrink-0 cursor-pointer transition-color duration-300 p-4
           style="text-align: center;"
+          @click="handleCateClick(i)"
         >
           {{ cate.name }}
         </div>
       </template>
     </draggable>
     <n-button
-      min-h-30
+
       v-if="settingStore.isSetting"
       class="ml-12"
       type="primary"
       size="small"
       :focusable="false"
-      secondary
-      v-on:click.native="modalStore.showModal('add', 'cate')"
+      secondary min-h-30
+      @click="modalStore.showModal('add', 'cate')"
     >
       <template #icon>
         <div i-carbon:add />
