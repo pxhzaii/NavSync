@@ -1,4 +1,4 @@
-import type { SettingItem, IconStyle } from '@/types'
+import type { IconStyle, SettingItem } from '@/types'
 
 export type IconStyleSetting = SettingItem<IconStyle>
 

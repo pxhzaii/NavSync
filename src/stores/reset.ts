@@ -13,9 +13,9 @@ export const useResetModalStore = defineStore('modal_reset', () => {
   }
   let isCommit = false
   function handleCommit() {
-    if (isCommit) {
+    if (isCommit)
       return
-    }
+
     isCommit = true
     resetVisible.value = false
     afterCommit.value()
@@ -33,6 +33,6 @@ export const useResetModalStore = defineStore('modal_reset', () => {
     handleCommit,
     afterCancel,
     afterCommit,
-    finishCommit
+    finishCommit,
   }
 })

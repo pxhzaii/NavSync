@@ -16,7 +16,7 @@ export const themeList: ThemeSetting[] = [
       bgC: '#f3f4f6',
       mainBgC: '#f3f4f6',
       buttonC: '#E7E6E1',
-      categoryC: 'rgba(85, 85, 85, 0.16)'
+      categoryC: 'rgba(85, 85, 85, 0.16)',
     },
   },
   {
@@ -32,7 +32,7 @@ export const themeList: ThemeSetting[] = [
       bgC: '#f3f4f6',
       mainBgC: '#f3f4f6',
       buttonC: '#87a8a4',
-      categoryC: 'rgba(13, 148, 136, 0.16)'
+      categoryC: 'rgba(13, 148, 136, 0.16)',
     },
   },
   {
@@ -48,7 +48,7 @@ export const themeList: ThemeSetting[] = [
       bgC: '#f3f4f6',
       mainBgC: '#f3f4f6',
       buttonC: '#0A4D68',
-      categoryC: 'rgba(20, 108, 148, 0.16)'
+      categoryC: 'rgba(20, 108, 148, 0.16)',
     },
   },
   {
@@ -64,7 +64,7 @@ export const themeList: ThemeSetting[] = [
       bgC: '#f3f4f6',
       mainBgC: '#f3f4f6',
       buttonC: '#BF9270',
-      categoryC: 'rgba(188, 108, 37, 0.16)'
+      categoryC: 'rgba(188, 108, 37, 0.16)',
     },
   },
 ]

@@ -1,16 +1,15 @@
-import { jsonResponse, readBody, checkPassword, handleError, type Env } from '../_shared'
+import { type Env, checkPassword, handleError, jsonResponse, readBody } from '../_shared'
 
 /** POST /api/verify-password - 验证访问口令（登录时用，body 传 password） */
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   try {
     const body = await readBody<{ password?: string }>(context.request)
 
-    if (!context.env.CLOUD_PASSWORD) {
+    if (!context.env.CLOUD_PASSWORD)
       return jsonResponse({ valid: true })
-    }
-    if (!body.password) {
+
+    if (!body.password)
       return jsonResponse({ valid: false, error: '请输入访问口令' }, 400)
-    }
 
     // 把 body 中的口令转为请求头，走统一的 checkPassword（含全端点限流）
     const headers = new Headers(context.request.headers)

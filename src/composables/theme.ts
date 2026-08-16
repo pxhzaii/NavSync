@@ -31,7 +31,6 @@ export function toggleTheme(theme: string) {
   // 非法主题值（如云端数据异常）时回退默认主题，避免 .value 访问 undefined 崩溃
   if (!newTheme)
     return
-  for (const key in newTheme) {
+  for (const key in newTheme)
     themeVars[key as ThemeVar].value = newTheme[key as ThemeVar]
-  }
 }

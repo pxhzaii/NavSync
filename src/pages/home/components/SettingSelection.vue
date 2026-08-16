@@ -28,7 +28,7 @@ const modelValue = computed({
 
 <template>
   <div>
-    <div text="14" overflow-hidden w-20p w-90 mb-10>
+    <div text="14" mb-10 overflow-hidden w-20p w-90>
       {{ title }}
     </div>
     <n-select

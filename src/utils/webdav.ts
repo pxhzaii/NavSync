@@ -323,7 +323,7 @@ export async function restoreFromWebDav(config: WebDavConfig): Promise<{ success
     const data = JSON.parse(text) as WebDavBackup
 
     // 防御性校验
-    if (!Array.isArray(data.data) || typeof data.settings !== 'object' || data.settings === null)
+    if (!Array.isArray(data.data) || Array.isArray(data.settings) || typeof data.settings !== 'object' || data.settings === null)
       return { success: false, error: '备份数据格式异常' }
 
     return { success: true, data }
@@ -348,14 +348,12 @@ export async function fetchServerWebDavConfig(): Promise<Partial<WebDavConfig>> 
     const data = await res.json() as { config?: Record<string, string> }
     if (!data.config || typeof data.config !== 'object')
       return {}
-    // 只返回服务端有值的字段
+    // 只返回服务端有值的字段（不含密码，密码需用户自行输入）
     const result: Partial<WebDavConfig> = {}
     if (data.config.serverUrl)
       result.serverUrl = data.config.serverUrl
     if (data.config.username)
       result.username = data.config.username
-    if (data.config.password)
-      result.password = data.config.password
     if (data.config.filePath)
       result.filePath = data.config.filePath
     if (data.config.proxy !== undefined)

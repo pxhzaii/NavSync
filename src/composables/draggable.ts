@@ -1,4 +1,4 @@
-import { isSmScreen } from "./app"
+import { isSmScreen } from './app'
 
 export function useDrag() {
   const settingStore = useSettingStore()

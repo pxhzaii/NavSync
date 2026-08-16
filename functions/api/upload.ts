@@ -1,25 +1,25 @@
 import {
-  jsonResponse,
-  readBody,
-  checkPassword,
-  gistHeaders,
-  fetchWithTimeout,
-  handleError,
+  type Env,
   GIST_API_URL,
   GIST_FILE,
-  type Env,
+  checkPassword,
+  fetchWithTimeout,
+  gistHeaders,
+  handleError,
+  jsonResponse,
+  readBody,
 } from '../_shared'
 
 /** POST /api/upload - 上传配置到 GitHub Gist */
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   try {
-    if (!context.env.GITHUB_TOKEN) {
-      return jsonResponse({ error: '服务端未配置 GitHub Token' }, 500)
-    }
-
-    // 口令校验（在读取请求体之前，fail fast）
+    // 口令校验优先（与其它端点一致，避免未授权时暴露 GITHUB_TOKEN 是否配置）
     const authFail = checkPassword(context.request, context.env)
-    if (authFail) return authFail
+    if (authFail)
+      return authFail
+
+    if (!context.env.GITHUB_TOKEN)
+      return jsonResponse({ error: '服务端未配置 GitHub Token' }, 500)
 
     const body = await readBody<{ data: any; settings: any; gistId?: string }>(context.request)
 
@@ -34,9 +34,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     if (body.gistId) {
       // Gist ID 只允许字母数字，防止路径注入
-      if (!/^[a-f0-9]+$/i.test(body.gistId)) {
+      if (!/^[a-f0-9]+$/i.test(body.gistId))
         return jsonResponse({ error: '无效的 gistId' }, 400)
-      }
 
       // 更新已有 Gist
       const res = await fetchWithTimeout(`${GIST_API_URL}/${body.gistId}`, {
@@ -49,9 +48,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
       if (res.ok) {
         const gist = await res.json<any>()
-        if (!gist.id) {
+        if (!gist.id)
           return jsonResponse({ error: 'GitHub 返回数据异常，缺少 Gist ID' }, 500)
-        }
+
         return jsonResponse({ success: true, gistId: gist.id })
       }
 
@@ -77,16 +76,16 @@ async function createGist(cloudData: any, headers: Record<string, string>): Prom
     method: 'POST',
     headers,
     body: JSON.stringify({
-      description: 'COME COME Navigation Config - 云端同步数据',
+      description: 'NavSync Config - 云端同步数据',
       public: false,
       files: { [GIST_FILE]: { content: JSON.stringify(cloudData, null, 2) } },
     }),
   })
   if (res.ok) {
     const gist = await res.json<any>()
-    if (!gist.id) {
+    if (!gist.id)
       return jsonResponse({ error: 'GitHub 返回数据异常，缺少 Gist ID' }, 500)
-    }
+
     return jsonResponse({ success: true, gistId: gist.id })
   }
   const err = await res.json().catch(() => ({})) as Record<string, string>

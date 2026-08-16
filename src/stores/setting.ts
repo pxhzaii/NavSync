@@ -1,6 +1,6 @@
-import { iconStyleList, searchList, themeList, siteStyleList } from '@/utils'
+import { iconStyleList, searchList, siteStyleList, themeList } from '@/utils'
 import preset from '@/preset.json'
-import type { Settings, SettingItem } from '@/types'
+import type { SettingItem, Settings } from '@/types'
 
 export type SettingKey = keyof Settings
 
@@ -25,7 +25,7 @@ export const settingData: { [K in SettingKey]: SettingItem<any>[] } = {
   theme: themeList,
   search: searchList,
   iconStyle: iconStyleList,
-  siteStyle: siteStyleList
+  siteStyle: siteStyleList,
 }
 
 export const useSettingStore = defineStore('theme', () => {

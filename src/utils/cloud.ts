@@ -36,12 +36,11 @@ export function isPasswordAuthed(): boolean {
 }
 
 function setPasswordAuthed(authed: boolean) {
-  if (authed) {
+  if (authed)
     localStorage.setItem(STORAGE_KEY_AUTHED, 'true')
-  }
-  else {
+
+  else
     localStorage.removeItem(STORAGE_KEY_AUTHED)
-  }
 }
 
 // ---------- 状态 ----------
@@ -62,12 +61,12 @@ export function clearCloudStorage() {
 
 async function apiFetch(path: string, init?: RequestInit, password?: string): Promise<Response> {
   const headers = new Headers(init?.headers)
-  if (!headers.has('Content-Type')) {
+  if (!headers.has('Content-Type'))
     headers.set('Content-Type', 'application/json')
-  }
-  if (password) {
+
+  if (password)
     headers.set('X-Cloud-Password', password)
-  }
+
   // 15 秒超时
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 15_000)
@@ -89,9 +88,9 @@ function timeoutMsg(e: any): string {
 export async function fetchCloudStatus(): Promise<{ passwordMode: boolean; error?: string }> {
   try {
     const res = await apiFetch('/api/status')
-    if (!res.ok) {
+    if (!res.ok)
       return { passwordMode: false, error: `请求失败 (HTTP ${res.status})` }
-    }
+
     const data = await res.json() as { passwordMode: boolean }
     return { passwordMode: data.passwordMode }
   }
@@ -123,7 +122,8 @@ export async function validatePassword(password: string): Promise<PasswordResult
       setStoredPassword(password)
       setPasswordAuthed(true)
     }
-    else {
+    else if (data.valid === false) {
+      // 仅在服务端明确返回 valid: false 时才清密码，避免网络异常等误清
       setStoredPassword('')
       setPasswordAuthed(false)
     }
@@ -165,12 +165,12 @@ export async function uploadToCloud(data: Category[], settings: Settings): Promi
 
     const result = await res.json() as { success: boolean; gistId?: string; error?: string }
 
-    if (result.success && result.gistId) {
+    if (result.success && result.gistId)
       setStoredGistId(result.gistId)
-    }
-    if (!result.success && gistId && res.status === 404) {
+
+    if (!result.success && gistId && res.status === 404)
       localStorage.removeItem(STORAGE_KEY_GIST_ID)
-    }
+
     return result
   }
   catch (e: any) {

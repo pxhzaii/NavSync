@@ -73,8 +73,13 @@ interface Params {
 
 const requestEngApi = $_.debounce(() => {
   const curSearch = searchList[currentIndex.value]
+  // 记录当前搜索引擎索引，用于竞态检测：回调返回时若已切换引擎则丢弃
+  const capturedIndex = currentIndex.value
   searchEngine.complete(curSearch.enName, keyword.value, (params: Params) => {
     if (keyword.value.trim().length === 0)
+      return
+    // 竞态保护：搜索引擎已切换则丢弃旧回调结果
+    if (currentIndex.value !== capturedIndex)
       return
 
     noticeKeyList.value.splice(0, noticeKeyList.value.length || 0)

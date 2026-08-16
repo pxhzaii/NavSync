@@ -20,15 +20,29 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     if (!context.env.GITHUB_TOKEN)
       return jsonResponse({ error: '服务端未配置 GitHub Token' }, 500)
 
-    // 列出用户的所有 Gist（每页 100 条，取第一页即可）
-    const res = await fetchWithTimeout(`${GIST_API_URL}?per_page=100`, {
-      headers: gistHeaders(context.env.GITHUB_TOKEN),
-    })
+    // 列出用户的所有 Gist（分页遍历最多 3 页，每页 100 条，覆盖 300 条）
+    const headers = gistHeaders(context.env.GITHUB_TOKEN)
+    let page = 1
+    const maxPages = 3
+    let gists: any[] = []
 
-    if (!res.ok)
-      return jsonResponse({ error: `查询 Gist 失败 (HTTP ${res.status})` }, 500)
+    while (page <= maxPages) {
+      const res = await fetchWithTimeout(`${GIST_API_URL}?per_page=100&page=${page}`, {
+        headers,
+      })
 
-    const gists = await res.json<any[]>()
+      if (!res.ok)
+        return jsonResponse({ error: `查询 Gist 失败 (HTTP ${res.status})` }, 500)
+
+      const batch = await res.json<any[]>()
+      gists = gists.concat(batch)
+
+      // 不足 100 条说明已是最后一页
+      if (batch.length < 100)
+        break
+
+      page++
+    }
     // 查找包含 navsync-config.json 文件的 Gist
     const found = gists.find((g: any) => g.files && g.files[GIST_FILE])
 

@@ -117,6 +117,10 @@ async function fetchAndCache(
   if (buffer.byteLength === 0)
     throw new UpstreamError(502, 'Empty favicon')
 
+  // 拒绝非图片 Content-Type（防止 HTML 页面被当 favicon 缓存）
+  if (!contentType.startsWith('image/'))
+    throw new UpstreamError(502, `Invalid Content-Type: ${contentType}`)
+
   // 写入 KV（失败不影响本次响应，只是不缓存）
   await kv.put(key, buffer, { expirationTtl: ttl, metadata: { contentType } }).catch(() => {})
 

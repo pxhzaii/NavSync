@@ -7,9 +7,9 @@ const router = createRouter({
     ...routes,
     {
       path: '/:pathMatch(.*)*',
-      redirect: '/'
-    }
-  ]
+      redirect: '/',
+    },
+  ],
 })
 
 export default router

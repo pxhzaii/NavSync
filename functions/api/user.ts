@@ -1,10 +1,10 @@
 import {
-  jsonResponse,
-  checkPassword,
-  gistHeaders,
-  fetchWithTimeout,
-  handleError,
   type Env,
+  checkPassword,
+  fetchWithTimeout,
+  gistHeaders,
+  handleError,
+  jsonResponse,
 } from '../_shared'
 
 /** GET /api/user - 获取 GitHub 用户信息（确认 Token 有效） */
@@ -12,11 +12,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   try {
     // 口令校验
     const authFail = checkPassword(context.request, context.env)
-    if (authFail) return authFail
+    if (authFail)
+      return authFail
 
-    if (!context.env.GITHUB_TOKEN) {
+    if (!context.env.GITHUB_TOKEN)
       return jsonResponse({ error: '服务端未配置 GitHub Token' }, 500)
-    }
 
     const res = await fetchWithTimeout('https://api.github.com/user', {
       headers: gistHeaders(context.env.GITHUB_TOKEN),

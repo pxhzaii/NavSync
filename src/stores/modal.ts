@@ -99,9 +99,9 @@ export const useModalStore = defineStore('modal', () => {
 
     deleteHandler[target.value]()
     modalVisible.value = false
-    // If delete a cate, cateIndex--
-    if (target.value === 'cate' && siteStore.cateIndex > 0)
-      siteStore.setCateIndex(siteStore.cateIndex - 1)
+    // 删除分类后，若 cateIndex 越界则修正为最后一项
+    if (target.value === 'cate' && siteStore.cateIndex >= siteStore.data.length)
+      siteStore.setCateIndex(siteStore.data.length - 1)
   }
   function clearInput() {
     let key: keyof typeof inputValues

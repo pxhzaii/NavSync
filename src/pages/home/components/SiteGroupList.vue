@@ -7,6 +7,9 @@ const modalStore = useModalStore()
 const siteStore = useSiteStore()
 const route = useRoute()
 
+// 安全获取当前分类的 groupList（空值保护，避免导入空数据后 data[0] 为 undefined 导致白屏）
+const currentGroupList = computed(() => siteStore.currentCateData.groupList)
+
 function handleSiteClick(url: string, groupIndex: number, siteIndex: number, e: Event) {
   if (route.name === 'setting') {
     e.preventDefault()
@@ -29,7 +32,7 @@ const renderStore = useRenderStore()
 <template>
   <section :key="renderStore.siteGroupListKey" pb-14 text-14 md="text-15" lg="text-15">
     <draggable
-      :list="siteStore.data[siteStore.cateIndex].groupList"
+      :list="currentGroupList"
       item-key="id"
       handle=".group__handle"
       drag-class="dragging"
@@ -44,7 +47,7 @@ const renderStore = useRenderStore()
       <template #item="{ element: group, index: i }: { element: Group, index: number }">
         <div
           :class="{
-            'group__header--line': siteStore.data[siteStore.cateIndex].groupList.length !== i + 1,
+            'group__header--line': currentGroupList.length !== i + 1,
           }"
           flex style="align-items: center;"
         >
@@ -64,7 +67,7 @@ const renderStore = useRenderStore()
           <!-- Group content -->
           <div flex class="group__content--all">
             <draggable
-              :list="siteStore.data[siteStore.cateIndex].groupList[i].siteList"
+              :list="currentGroupList[i].siteList"
               item-key="id"
               group="site"
               handle=".site__handle"
@@ -97,7 +100,7 @@ const renderStore = useRenderStore()
                 </div>
               </template>
               <template #footer>
-                <div v-if="!settingStore.isDragging && settingStore.isSetting && siteStore.data[siteStore.cateIndex].groupList[i].siteList.length < 6" min-h-32>
+                <div v-if="!settingStore.isDragging && settingStore.isSetting && currentGroupList[i].siteList.length < 6" min-h-32>
                   <n-button class="h-full" type="primary" secondary :focusable="false" @click="modalStore.showModal('add', 'site', i)">
                     <template #icon>
                       <div i-carbon:add />

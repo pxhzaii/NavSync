@@ -138,6 +138,16 @@ function recordSuccess(ip: string) {
   attempts.delete(ip)
 }
 
+/** 恒定时间字符串比较（防止时序攻击） */
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length)
+    return false
+  let result = 0
+  for (let i = 0; i < a.length; i++)
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return result === 0
+}
+
 /**
  * 口令校验（所有 API 端点统一使用）：
  * 1. 未设置 CLOUD_PASSWORD → 跳过校验
@@ -162,7 +172,7 @@ export function checkPassword(request: Request, env: Env): Response | null {
   }
 
   const pwd = request.headers.get('X-Cloud-Password')
-  if (pwd !== env.CLOUD_PASSWORD) {
+  if (!pwd || !constantTimeEqual(pwd, env.CLOUD_PASSWORD)) {
     // 口令缺失或错误 → 计入失败，返回剩余次数
     const { remaining } = recordFailure(ip)
     return jsonResponse({

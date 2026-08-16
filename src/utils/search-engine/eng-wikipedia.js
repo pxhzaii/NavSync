@@ -1,8 +1,8 @@
-import axios from 'axios';
-import jsonpAdapter from 'axios-jsonp';
+import axios from 'axios'
+import jsonpAdapter from 'axios-jsonp'
 
 function target(wd) {
-  return 'https://zh.wikipedia.org/w/index.php?search=' + encodeURIComponent(wd)
+  return `https://zh.wikipedia.org/w/index.php?search=${encodeURIComponent(wd)}`
 }
 
 function complete(wd, callback) {
@@ -15,7 +15,7 @@ function complete(wd, callback) {
       search: wd,
     },
     adapter: jsonpAdapter,
-  }).then(resposnse => {
+  }).then((resposnse) => {
     callback({
       eng: 'wikipedia',
       wd: resposnse.data[0],

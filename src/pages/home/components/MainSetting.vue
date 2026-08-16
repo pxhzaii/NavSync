@@ -54,7 +54,7 @@ function exportData() {
 
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
-  a.download = `NavSync_Data_${new Date().toLocaleString()}.json`
+  a.download = `NavSync_Data_${new Date().toISOString().replace(/[:.]/g, '-')}.json`
   a.href = url
   document.body.appendChild(a)
   a.click()
@@ -72,7 +72,7 @@ function importData() {
       try {
         const jsonStr = await file.text()
         const data = JSON.parse(jsonStr) as CacheData
-        if (!data.data || !data.settings)
+        if (!Array.isArray(data.data) || data.data.length === 0 || !data.settings)
           throw new Error('非法的数据文件')
 
         loadData(data)

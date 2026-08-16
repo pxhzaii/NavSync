@@ -12,16 +12,16 @@ const resetModal = useResetModalStore()
   >
     <template #header>
       <div>{{ resetModal.title }}</div>
-    </template>   
+    </template>
     <div>
       <div>{{ resetModal.content }}</div>
-    </div> 
+    </div>
     <template #action>
       <div flex gap-x-12>
         <n-button @click="resetModal.handleCancel">
           取消
         </n-button>
-        <n-button type="primary" text-color='#ffffff' @click="resetModal.handleCommit">
+        <n-button type="primary" text-color="#ffffff" @click="resetModal.handleCommit">
           确认
         </n-button>
       </div>

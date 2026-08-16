@@ -30,7 +30,6 @@ export interface Search {
   url: string
   key: string
   favicon: string
-  s: string
 }
 
 export interface IconStyle {

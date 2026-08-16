@@ -31,12 +31,12 @@ export const useSiteStore = defineStore('site', () => {
   const currentCateData = computed(() => data.value[cateIndex.value] || { groupList: [] })
 
   function ensureHttps(url: string | undefined) {
-    if (url === undefined || url === null) {
+    if (url === undefined || url === null)
       return ''
-    }
-    if (!url.match(/^(http:\/\/|https:\/\/).*/)) {
-      url = "https://" + url
-    }
+
+    if (!url.match(/^(http:\/\/|https:\/\/).*/))
+      url = `https://${url}`
+
     return url
   }
 
@@ -74,6 +74,9 @@ export const useSiteStore = defineStore('site', () => {
   }
   function setData(value: Category[]) {
     data.value = value
+    // 确保 cateIndex 不越界
+    if (cateIndex.value >= data.value.length)
+      cateIndex.value = Math.max(0, data.value.length - 1)
   }
 
   watch(data, () => {

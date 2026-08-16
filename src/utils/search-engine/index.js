@@ -11,15 +11,15 @@ const ENGINES = {
   Bing: engBing,
   Qiuwenbaike: engQiuwenbaike,
   Wikipedia: engWikipedia,
-  Sogou: engSogou
+  Sogou: engSogou,
 }
 
 function target(eng, wd) {
-  return (ENGINES[eng] || ENGINES.Baidu).target(wd);
+  return (ENGINES[eng] || ENGINES.Baidu).target(wd)
 }
 
 function complete(eng, wd, callback) {
-  return (ENGINES[eng] || ENGINES.Baidu).complete(wd, callback);
+  return (ENGINES[eng] || ENGINES.Baidu).complete(wd, callback)
 }
 
 export default {
