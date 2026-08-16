@@ -1,8 +1,23 @@
-
+---
+AIGC:
+  ContentProducer: '001191110102MAD55U9H0F10002'
+  ContentPropagator: '001191110102MAD55U9H0F10002'
+  Label: '1'
+  ProduceID: 'e1566759-c8d0-40a0-9045-8e7f7a5b7b3b'
+  PropagateID: 'e1566759-c8d0-40a0-9045-8e7f7a5b7b3b'
+  ReservedCode1: '838bc00a-0dec-4dbc-927f-91c071b9effc'
+  ReservedCode2: '838bc00a-0dec-4dbc-927f-91c071b9effc'
+---
 
 # NavSync
 
 一款极简的网址导航工具，支持云端同步。基于 Vue 3 + Vite + TypeScript 构建，部署在 Cloudflare Pages，采用 **favicon 代理 + KV 缓存** 架构。
+
+- 图标获取不再由浏览器直连第三方接口，而是走本站 Cloudflare Pages Functions 代理
+- 图标经后端拉取后写入 **Cloudflare KV** 缓存，同域名只回源一次，加载更快更稳
+
+## 介绍
+
 NavSync 旨在为用户提供纯粹、简洁、高效的上网体验。它保留了基础的网址导航功能，同时支持跨设备云端同步，让你在任何设备上都能使用同一套配置。
 
 ## 功能
@@ -21,6 +36,19 @@ NavSync 旨在为用户提供纯粹、简洁、高效的上网体验。它保留
 - **Favicon 懒加载**（图标异步加载、骨架占位、加载失败回退首字母彩色图标）
 - **Favicon 代理 + KV 缓存**（后端统一代理第三方图标源，KV 缓存 30 天，同一域名仅回源一次）
 
+## 云端同步架构
+
+```
+浏览器 ──口令──▶ Cloudflare Pages ──Token──▶ GitHub Gist API
+                 (前端 + Functions)
+                 (环境变量存储 Token + 口令)
+```
+
+- **GitHub Token** 和 **访问口令** 存储在 Cloudflare Pages 环境变量中，前端代码不含任何机密信息
+- 用户只需输入访问口令即可同步，无需了解 Token 等技术细节
+- 没有口令无法同步，口令错误也无法同步
+- 所有 API 端点共用同一套限流机制（按 IP 计数，5 次失败锁定 15 分钟）
+- 前后端在同一个 Cloudflare Pages 部署中，无需单独部署 Worker
 
 ## 一键部署
 
@@ -80,7 +108,7 @@ favicon 缓存需要用到 Cloudflare KV，提前创建好，后续绑定时直�
    | --- | --- | --- | --- |
    | `GITHUB_TOKEN` | **是** | 第二步获取的 GitHub Token，仅需 `gist` 权限 | `ghp_xxxxxxxxxxxx` |
    | `CLOUD_PASSWORD` | 否 | 访问口令，同步时需输入；留空则不启用口令保护 | `随机生成的复杂密码` |
-   | `FAVICON_SOURCE` | 否 | favicon 第三方图标源：`duckduckgo`（默认）/ `0x3` / `google` | `duckduckgo` |
+   | `FAVICON_SOURCE` | 否 | favicon 第三方图标源：`google`（默认）/ `duckduckgo` / `0x3` | `google` |
    | `FAVICON_TTL` | 否 | favicon 缓存时长（秒），范围 `60` ~ `2592000`，默认 30 天 | `2592000` |
 
    **KV 绑定**（Bindings，不是环境变量）：
@@ -131,13 +159,13 @@ Cloudflare 会自动拉取代码、安装依赖、构建并部署。通常 2-3 �
 | KV 命名空间叫什么？ | 建议命名 `navsync-favicon`，也可以取其他名字，只要绑定时选对即可 |
 | 绑定时变量名填什么？ | **必须填 `FAVICON_KV`**，这是代码中读取的名称，不能改 |
 | 补绑 KV 后不生效？ | 重新部署一次即可：**部署 → 重新部署**（Deployments → Redeploy） |
-| `FAVICON_SOURCE` 能填什么？ | `duckduckgo`（默认）/ `0x3` / `google`，三选一 |
+| `FAVICON_SOURCE` 能填什么？ | `google`（默认）/ `duckduckgo` / `0x3`，三选一 |
 | `FAVICON_TTL` 范围？ | `60` ~ `2592000` 秒，超出会自动钳制到合法范围 |
 
 ### Favicon 代理说明
 
 - 前端 `getFaviconUrl` 不再直连第三方，而是请求本站 `/favicon/{domain}.png`
-- 该路由由 `functions/favicon/[id].ts` 处理：先查 KV 缓存，未命中则由后端代理请求图标源（DuckDuckGo / 0x3 / Google），成功后写入 KV
+- 该路由由 `functions/favicon/[id].ts` 处理：先查 KV 缓存，未命中则由后端代理请求图标源（Google / DuckDuckGo / 0x3），成功后写入 KV
 - 同一域名并发请求会去重（in-flight 合并），确保每个域名仅回源一次
 - KV 带 Content-Type 元数据，第三方图标源（google 返回 PNG）时缓存命中仍返回正确类型
 - 第三方接口失败时返回 5xx，前端自动降级为首字母彩色图标
@@ -183,7 +211,7 @@ npm run preview
 ```
 GITHUB_TOKEN=ghp_xxxxxxxxxxxx
 CLOUD_PASSWORD=your-password
-FAVICON_SOURCE=duckduckgo
+FAVICON_SOURCE=google
 FAVICON_TTL=2592000
 ```
 
