@@ -2,13 +2,7 @@
 
 # NavSync
 
-一款极简的网址导航工具，基于 [COME COME](https://github.com/hellojuantu/comecome) 由AI改进，支持云端同步。基于 Vue 3 + Vite + TypeScript 构建，部署在 Cloudflare Pages，采用 **favicon 代理 + KV 缓存** 架构。
-
-- 图标获取不再由浏览器直连第三方接口，而是走本站 Cloudflare Pages Functions 代理
-- 图标经后端拉取后写入 **Cloudflare KV** 缓存，同域名只回源一次，加载更快更稳
-
-## 介绍
-
+一款极简的网址导航工具，基于 [COME COME](https://github.com/hellojuantu/comecome) 由AI改进，支持云端同步，部署在 Cloudflare Pages，采用 **favicon 代理 + KV 缓存** 架构。
 NavSync 旨在为用户提供纯粹、简洁、高效的上网体验。它保留了基础的网址导航功能，同时支持跨设备云端同步，让你在任何设备上都能使用同一套配置。
 
 ## 功能
