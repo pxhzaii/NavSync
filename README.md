@@ -1,5 +1,4 @@
 
-
 # NavSync
 
 一款极简的网址导航工具，基于 [COME COME](https://github.com/hellojuantu/comecome) 由AI改进，支持云端同步，部署在 Cloudflare Pages，采用 **favicon 代理 + KV 缓存** 架构。
