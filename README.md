@@ -1,13 +1,3 @@
----
-AIGC:
-  ContentProducer: '001191110102MAD55U9H0F10002'
-  ContentPropagator: '001191110102MAD55U9H0F10002'
-  Label: '1'
-  ProduceID: 'abf1c2b0-bb30-46fc-88be-3dc0368b404f'
-  PropagateID: 'abf1c2b0-bb30-46fc-88be-3dc0368b404f'
-  ReservedCode1: '3df36300-c0f6-4d7e-a5b7-4ac06d80ecc0'
-  ReservedCode2: '3df36300-c0f6-4d7e-a5b7-4ac06d80ecc0'
----
 
 # NavSync
 
@@ -135,15 +125,9 @@ Cloudflare 会自动拉取代码、安装依赖、构建并部署。通常 2-3 �
 > 连续 5 次口令错误后，该 IP 将被锁定 15 分钟。
 
 ### WebDAV 备份说明
+如果使用坚果云需要代理，坚果云使用的CF的cdn，cf to cf会520错误。
+ [代理仓库](https://github.com/pxhzaii/keyvault-webdav-proxy) 有说明
 
-进入 **设置 → 云端同步**，云端同步验证通过后可见「WebDAV 备份」区块：
-
-- **服务器地址**：填写你的 WebDAV 服务地址，如坚果云 `https://dav.jianguoyun.com/dav`（带或不带末尾斜杠均可，程序会自动规范化）
-- **代理地址**：留空表示浏览器**直连** WebDAV（需该服务支持 CORS，如坚果云）；填写自建代理地址（如 `https://webdav.5as.cn/api/webdav`，需实现 keyvault-webdav-proxy 的 `?url=&method=` 协议）可中转请求，规避 CF-to-CF 520 问题
-- **用户名 / 密码**：坚果云需使用「应用密码」（在坚果云官网 → 账户信息 → 安全选项 中生成），非登录密码
-- **备份路径**：默认 `/navsync/backup.json`，按需修改；路径需包含至少一层子目录（坚果云不允许直接在 `/dav/` 根下放文件），若填根目录级路径会自动放入 `/navsync/` 子目录
-- 点击「测试连接」确认配置可用，然后「备份到 WebDAV」或「从 WebDAV 恢复」
-- 备份遇到 404/409 时会自动尝试创建父目录后重试；仍失败会给出具体原因提示
 
 **环境变量预设**（可选）：在 Cloudflare Pages 环境变量中设置以下变量，前端 WebDAV 配置区会自动填充，无需手动输入：
 
@@ -174,92 +158,11 @@ Cloudflare 会自动拉取代码、安装依赖、构建并部署。通常 2-3 �
 | `FAVICON_TTL` 范围？ | `60` ~ `2592000` 秒，超出会自动钳制到合法范围 |
 | `WEBDAV_*` 环境变量？ | 可选，预设 WebDAV 配置后前端自动填充，无需手动输入（见 WebDAV 备份说明） |
 
-### Favicon 代理说明
 
-- 前端 `getFaviconUrl` 不再直连第三方，而是请求本站 `/favicon/{domain}.png`
-- 该路由由 `functions/favicon/[id].ts` 处理：先查 KV 缓存，未命中则由后端代理请求图标源（Google / DuckDuckGo / 0x3），成功后写入 KV
-- 同一域名并发请求会去重（in-flight 合并），确保每个域名仅回源一次
-- KV 带 Content-Type 元数据，第三方图标源（google 返回 PNG）时缓存命中仍返回正确类型
-- 第三方接口失败时返回 5xx，前端自动降级为首字母彩色图标
-- 常见网站（京东、淘宝、拼多多等）仍使用 `public/site/` 下的本地 SVG，不走代理
 
-> **安全提示**：以上变量只需在 Cloudflare Pages Dashboard 中设置，**不要**写在代码或 `.env` 文件中。`.env.example` 仅供参考。
->
-> **限流机制**：所有需要口令校验的 API 端点共用同一套 IP 限流，5 分钟内失败 5 次即锁定 15 分钟，锁定期间拒绝所有请求。
-> 注意：限流基于 Cloudflare 隔离实例的内存计数，同一 IP 命中不同实例时计数可能不连续（非安全敏感场景足够，高安全需求建议绑定 KV 做持久化计数）。
 
-## API 端点
-
-部署后自动提供以下 API（与前端同域，无需额外配置）：
-
-| 端点 | 方法 | 说明 |
-| --- | --- | --- |
-| `/api/status` | GET | 查询服务状态（是否启用口令模式） |
-| `/api/verify-password` | POST | 验证访问口令 |
-| `/api/find-gist` | GET | 查找当前用户已有的配置 Gist（跨设备同步用） |
-| `/api/upload` | POST | 上传配置到云端 Gist |
-| `/api/download` | GET | 从云端 Gist 下载配置 |
-| `/api/user` | GET | 获取 GitHub 用户信息（验证 Token 有效性） |
-| `/api/webdav-config` | GET | 返回服务端预设的 WebDAV 配置（需口令校验） |
-| `/favicon/{domain}.png` | GET | 网站图标代理（查 KV 缓存 → 回源 → 写缓存） |
-
-## 本地开发
-
-```bash
-# 安装依赖
-npm install
-
-# 启动开发服务器
-npm run dev
-
-# 构建生产版本
-npm run build
-
-# 预览构建结果
-npm run preview
-```
-
-本地开发时如需测试云端同步与 favicon 代理，在项目根目录创建 `.dev.vars` 文件（已在 `.gitignore` 中排除，`wrangler pages dev` 会自动读取）：
-
-```
-GITHUB_TOKEN=ghp_xxxxxxxxxxxx
-CLOUD_PASSWORD=your-password
-FAVICON_SOURCE=google
-FAVICON_TTL=2592000
-```
-
-> 本地运行 `npm run dev` 时，favicon 代理需要 KV：可用 `wrangler pages dev` 配合本地 KV 模拟，或直接在浏览器地址栏访问 `/favicon/{域名}.png` 验证部署后的行为。本地无 KV 时该路由会正常回源但无法缓存。
-
-## 更新
-
-当上游仓库有更新时，同步到你 Fork 的仓库：
-
-```bash
-# 添加上游仓库（只需一次）
-git remote add upstream https://github.com/pxhzaii/NavSync.git
-
-# 拉取并合并上游更新
-git fetch upstream
-git merge upstream/main
-
-# 推送到你的仓库
-git push origin main
-```
-
-推送后 Cloudflare Pages 会自动重新部署。
-
-## 自定义修改
-
-| 想改什么 | 文件位置 | 说明 |
-| --- | --- | --- |
-| 浏览器标签图标 | `public/favicon.png` | 替换图片文件即可，建议 32x32 或 64x64 PNG |
-| 页面头部 Logo | `public/favicon.png` | 与标签图标共用同一文件，修改同上 |
-| 网站标题 | `index.html` | 修改 `<title>` 标签内容 |
-| 默认搜索引擎 | `src/utils/types/search.ts` + `src/preset.json` | 列表顺序和 `preset.json` 中 `settings.search` 字段 |
-
-## 致谢https://github.com/hellojuantu/comecome
+## 致谢
 - [COME COME](https://github.com/hellojuantu/comecome)
 - [Moon-Web-Start](https://github.com/jic999/moon-web-start) 
 - [0x3](https://0x3.com)
 
-> AI生成
