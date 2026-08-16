@@ -103,7 +103,7 @@ export function clearWebDavStorage() {
  *  自动放入 /navsync/ 子目录。
  */
 export function normalizeFilePath(filePath: string): string {
-  const clean = filePath.trim().replace(/\/{2,}/g, '/').replace(/\/+/g, '').replace(/^\/+/, '')
+  const clean = filePath.trim().replace(/\/{2,}/g, '/').replace(/\/+$/, '').replace(/^\/+/, '')
   const segments = clean.split('/').filter(Boolean)
   if (segments.length === 0)
     return '/navsync/backup.json'
