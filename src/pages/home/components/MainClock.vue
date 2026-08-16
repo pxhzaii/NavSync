@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import solarLunar from 'solarlunar-es'
 
 const time = ref('')
 
@@ -10,19 +9,6 @@ function refreshTime() {
   const now = dayjs().format('YYYY年MM月DD日 HH:mm')
   const timeArr = now.split(' ')
   time.value = timeArr[1]
-  if (time.value === '00:00')
-    getDate()
-}
-
-function getDate() {
-  const now = dayjs().format('YYYY-MM-DD')
-  const dateArr = now.split('-').map(val => Number(val))
-  const lunar = solarLunar.solar2lunar(dateArr[0], dateArr[1], dateArr[2])
-  if (typeof lunar !== 'number') {
-    // 农历信息已计算但不展示，保留以备后续使用
-    const _lunar = lunar
-    return _lunar
-  }
 }
 
 function timing() {
