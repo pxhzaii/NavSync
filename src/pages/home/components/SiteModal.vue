@@ -2,9 +2,9 @@
 const modalStore = useModalStore()
 const errorInput = ref(false)
 
-function handleAllCommit(e: Event) {
-  if (modalStore.inputValues.name.length <= 0 ||
-      ('site' === modalStore.target && modalStore.inputValues.url.length <= 0)) {
+function handleAllCommit(_e: Event) {
+  if (modalStore.inputValues.name.length <= 0
+      || (modalStore.target === 'site' && modalStore.inputValues.url.length <= 0)) {
     errorInput.value = true
     setTimeout(() => errorInput.value = false, 500)
     return
@@ -29,8 +29,8 @@ function handleAllCommit(e: Event) {
     </template>
     <div>
       <n-input
-        :status="errorInput && modalStore.inputValues.name.length <= 0 ? 'error' : 'success'"
         v-model:value="modalStore.inputValues.name"
+        :status="errorInput && modalStore.inputValues.name.length <= 0 ? 'error' : 'success'"
         placeholder="名称"
         my-8
         @keydown.enter="handleAllCommit"
@@ -40,8 +40,8 @@ function handleAllCommit(e: Event) {
         v-model:value="modalStore.inputValues.url"
         placeholder="链接"
         my-8
-        @keydown.enter="handleAllCommit"
         :status="errorInput && modalStore.inputValues.url.length <= 0 ? 'error' : 'success'"
+        @keydown.enter="handleAllCommit"
       />
       <n-input
         v-if="modalStore.target === 'site'"
@@ -59,7 +59,7 @@ function handleAllCommit(e: Event) {
         <n-button v-if="modalStore.action === 'update'" type="error" @click="modalStore.handleDelete">
           删除
         </n-button>
-        <n-button type="primary" text-color='#ffffff' @click="handleAllCommit">
+        <n-button type="primary" text-color="#ffffff" @click="handleAllCommit">
           确认
         </n-button>
       </div>
