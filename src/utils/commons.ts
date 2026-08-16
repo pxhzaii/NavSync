@@ -10,8 +10,12 @@ export function getRandomDarkColor() {
 }
 
 export function getRandomComplexNumber() {
-  const random = Math.random()
+  // Math.random() 极少返回 0 或产生科学计数法（如 1e-7），
+  // 用 Date.now() 补偿确保始终得到合法的小数
+  const random = Math.random() || Date.now() / 1e13
   const randomStr = random.toString().split('.')[1]
+  if (!randomStr)
+    return Math.random()
   const randomLength = randomStr.length
   const randomComplexNumber = Number(randomStr) / 10 ** randomLength
   return randomComplexNumber
