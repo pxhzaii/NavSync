@@ -3,7 +3,7 @@
  *
  * 工作流程：
  *   1. 请求到达 → 先查 KV 缓存，命中直接返回（含正确的 Content-Type）
- *   2. 未命中 → 后端代理请求第三方图标源（DuckDuckGo / 0x3 / Google）
+ *   2. 未命中 → 后端代理请求第三方图标源（Google / DuckDuckGo / 0x3）
  *   3. 成功 → 写入 KV 缓存（默认 30 天）并返回；失败 → 返回 5xx，前端降级为首字母
  *
  * 并发保护：
@@ -13,7 +13,7 @@
  *   - KV namespace 绑定：binding 名称必须为 FAVICON_KV
  *     Pages 项目 → Settings → Bindings → KV namespace → 变量名填 FAVICON_KV
  *   - 环境变量（可选）：
- *     FAVICON_SOURCE  - 图标源：duckduckgo（默认）/ 0x3 / google
+ *     FAVICON_SOURCE  - 图标源：google（默认）/ duckduckgo / 0x3
  *     FAVICON_TTL     - 缓存时长（秒），范围 60 ~ 2592000，默认 2592000（30 天）
  */
 import type { Env } from '../_shared'
@@ -64,13 +64,13 @@ function clampTtl(raw: number): number {
 /** 生成图标源 URL（支持多个上游，便于故障切换） */
 function buildFaviconUrl(source: string, domain: string): string {
   switch (source) {
-    case 'google':
-      return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`
+    case 'duckduckgo':
+      return `https://icons.duckduckgo.com/ip3/${domain}.ico`
     case '0x3':
       return `https://0x3.com/icon?host=${domain}`
-    case 'duckduckgo':
+    case 'google':
     default:
-      return `https://icons.duckduckgo.com/ip3/${domain}.ico`
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`
   }
 }
 
@@ -156,7 +156,7 @@ export const onRequestGet: PagesFunction<FaviconEnv> = async (context) => {
   }
 
   // 3. 回源第三方图标服务（同一域名并发请求共享同一次回源）
-  const source = env.FAVICON_SOURCE || 'duckduckgo'
+  const source = env.FAVICON_SOURCE || 'google'
   const upstreamUrl = buildFaviconUrl(source, domain)
   const inflightKey = `${source}:${domain}`
 
