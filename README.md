@@ -1,23 +1,8 @@
----
-AIGC:
-  ContentProducer: '001191110102MAD55U9H0F10002'
-  ContentPropagator: '001191110102MAD55U9H0F10002'
-  Label: '1'
-  ProduceID: 'd63c5145-78a0-45a8-a236-032dc5d3b806'
-  PropagateID: 'd63c5145-78a0-45a8-a236-032dc5d3b806'
-  ReservedCode1: '2dc914b6-b659-45ee-9140-7e25159ee640'
-  ReservedCode2: '2dc914b6-b659-45ee-9140-7e25159ee640'
----
+
 
 # NavSync
 
 一款极简的网址导航工具，支持云端同步。基于 Vue 3 + Vite + TypeScript 构建，部署在 Cloudflare Pages，采用 **favicon 代理 + KV 缓存** 架构。
-
-- 图标获取不再由浏览器直连第三方接口，而是走本站 Cloudflare Pages Functions 代理
-- 图标经后端拉取后写入 **Cloudflare KV** 缓存，同域名只回源一次，加载更快更稳
-
-## 介绍
-
 NavSync 旨在为用户提供纯粹、简洁、高效的上网体验。它保留了基础的网址导航功能，同时支持跨设备云端同步，让你在任何设备上都能使用同一套配置。
 
 ## 功能
@@ -36,19 +21,6 @@ NavSync 旨在为用户提供纯粹、简洁、高效的上网体验。它保留
 - **Favicon 懒加载**（图标异步加载、骨架占位、加载失败回退首字母彩色图标）
 - **Favicon 代理 + KV 缓存**（后端统一代理第三方图标源，KV 缓存 30 天，同一域名仅回源一次）
 
-## 云端同步架构
-
-```
-浏览器 ──口令──▶ Cloudflare Pages ──Token──▶ GitHub Gist API
-                 (前端 + Functions)
-                 (环境变量存储 Token + 口令)
-```
-
-- **GitHub Token** 和 **访问口令** 存储在 Cloudflare Pages 环境变量中，前端代码不含任何机密信息
-- 用户只需输入访问口令即可同步，无需了解 Token 等技术细节
-- 没有口令无法同步，口令错误也无法同步
-- 所有 API 端点共用同一套限流机制（按 IP 计数，5 次失败锁定 15 分钟）
-- 前后端在同一个 Cloudflare Pages 部署中，无需单独部署 Worker
 
 ## 一键部署
 
