@@ -32,14 +32,14 @@ export async function fetchWithTimeout(url: string, init: RequestInit): Promise<
 /** 读取请求体并检查大小限制 */
 export async function readBody<T>(request: Request): Promise<T> {
   const contentLength = request.headers.get('Content-Length')
-  if (contentLength && Number(contentLength) > MAX_BODY_SIZE) {
+  if (contentLength && Number(contentLength) > MAX_BODY_SIZE)
     throw new Error('请求体过大')
-  }
+
   const body = await request.json<T>()
   const str = JSON.stringify(body)
-  if (str.length > MAX_BODY_SIZE) {
+  if (str.length > MAX_BODY_SIZE)
     throw new Error('请求体过大')
-  }
+
   return body
 }
 
@@ -74,11 +74,11 @@ export function handleError(err: any): Response {
 
 // ---------- 暴力破解防护（内存限流） ----------
 // 注意：内存计数按 Cloudflare 隔离实例独立，分布式 IP 池可绕过低频率尝试。
-// 如需真正跨实例统一计数，需绑定 KV 做持久化计数（当前项目未绑定 KV）。
+// 如需真正跨实例统一计数，需绑定独立 KV 做持久化计数（当前限流计数仅在内存中）。
 
-const MAX_ATTEMPTS = 5            // 窗口内最多失败 5 次
-const WINDOW_MS = 5 * 60 * 1000   // 窗口：5 分钟
-const LOCK_MS = 15 * 60 * 1000    // 锁定时长：15 分钟
+const MAX_ATTEMPTS = 5 // 窗口内最多失败 5 次
+const WINDOW_MS = 5 * 60 * 1000 // 窗口：5 分钟
+const LOCK_MS = 15 * 60 * 1000 // 锁定时长：15 分钟
 
 interface AttemptRecord {
   count: number
@@ -94,15 +94,16 @@ function getClientIp(request: Request): string {
 
 function isLocked(ip: string): { locked: boolean; retryAfterSec: number } {
   const rec = attempts.get(ip)
-  if (!rec) return { locked: false, retryAfterSec: 0 }
+  if (!rec)
+    return { locked: false, retryAfterSec: 0 }
   const now = Date.now()
-  if (rec.lockedUntil > now) {
+  if (rec.lockedUntil > now)
     return { locked: true, retryAfterSec: Math.ceil((rec.lockedUntil - now) / 1000) }
-  }
+
   // 锁定已过期，清除记录
-  if (rec.lockedUntil > 0) {
+  if (rec.lockedUntil > 0)
     attempts.delete(ip)
-  }
+
   return { locked: false, retryAfterSec: 0 }
 }
 
@@ -140,9 +141,8 @@ function recordSuccess(ip: string) {
  * 通过返回 null，不通过返回 Response
  */
 export function checkPassword(request: Request, env: Env): Response | null {
-  if (!env.CLOUD_PASSWORD) {
+  if (!env.CLOUD_PASSWORD)
     return null // 未设置口令，跳过校验
-  }
 
   const ip = getClientIp(request)
 
@@ -162,7 +162,7 @@ export function checkPassword(request: Request, env: Env): Response | null {
     const { remaining } = recordFailure(ip)
     return jsonResponse({
       error: '访问口令不正确',
-      remaining: remaining,
+      remaining,
     }, 403)
   }
 
