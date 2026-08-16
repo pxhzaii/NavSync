@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import SettingSelection from './SettingSelection.vue'
-import type { Settings, Category } from '@/types'
-import type { ThemeSetting } from '@/utils'
-import { iconStyleList, searchList, themeList, siteStyleList } from '@/utils'
 import ResetModal from './ResetModal.vue'
 import CloudSync from './CloudSync.vue'
+import type { Category, Settings } from '@/types'
+import type { ThemeSetting } from '@/utils'
+import { iconStyleList, searchList, siteStyleList, themeList } from '@/utils'
 import preset from '@/preset.json'
 import router from '@/router'
 import { toggleSiteSytle } from '@/composables/dark'
@@ -21,13 +21,13 @@ function renderThemeLabel(option: ThemeSetting): VNode {
   return h('div', { class: 'flex items-center gap-x-8' },
     [
       h('div', { class: 'w-16 h-16 circle border-1 border-fff', style: { backgroundColor: buttonColor } }),
-      h('div', darkConfig , option.name),
+      h('div', darkConfig, option.name),
     ],
   )
 }
 
 /* render color */
-function renderColor(option: any): VNode {
+function renderColor(option: { name: string }): VNode {
   const darkConfig = isDark.value ? { style: { color: '#ffffff' } } : {}
   return h('div', { class: 'flex items-center gap-x-8' },
     [
@@ -35,8 +35,6 @@ function renderColor(option: any): VNode {
     ],
   )
 }
-
-/* Icon Style */
 
 /* import and export */
 interface CacheData {
@@ -74,12 +72,12 @@ function importData() {
       try {
         const jsonStr = await file.text()
         const data = JSON.parse(jsonStr) as CacheData
-        if (!data.data || !data.settings) {
+        if (!data.data || !data.settings)
           throw new Error('非法的数据文件')
-        }
+
         loadData(data)
       }
-      catch (error) {
+      catch (_error) {
         window.$message.error('请导入合法的数据文件', { duration: 2000 })
       }
     }
@@ -99,7 +97,7 @@ function resetData() {
     const clonedPreset = JSON.parse(JSON.stringify(preset))
     const data = clonedPreset as CacheData
     loadData(data)
-    window.$message.success( '重置成功', { duration: 2000 })
+    window.$message.success('重置成功', { duration: 2000 })
   }
 }
 
@@ -158,7 +156,9 @@ function loadData(data: any) {
     </div>
     <!-- Cloud Sync Section -->
     <div mt-24>
-      <div text-14 mb-10 font-bold>云端同步</div>
+      <div mb-10 text-14 font-bold>
+        云端同步
+      </div>
       <CloudSync />
     </div>
 
@@ -174,7 +174,7 @@ function loadData(data: any) {
       </n-button>
     </div>
     <div my-24 flex-center gap-x-24>
-      <n-button type="primary" text-color='#ffffff' size="large" @click="$router.back()">
+      <n-button type="primary" text-color="#ffffff" size="large" @click="$router.back()">
         返回
       </n-button>
     </div>
