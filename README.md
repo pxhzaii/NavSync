@@ -3,19 +3,18 @@ AIGC:
   ContentProducer: '001191110102MAD55U9H0F10002'
   ContentPropagator: '001191110102MAD55U9H0F10002'
   Label: '1'
-  ProduceID: '69c1088e-cdae-4cd5-b934-4cc6e01a5b52'
-  PropagateID: '69c1088e-cdae-4cd5-b934-4cc6e01a5b52'
-  ReservedCode1: '99727caf-b1b4-4f10-a61e-a9e90e045183'
-  ReservedCode2: '99727caf-b1b4-4f10-a61e-a9e90e045183'
+  ProduceID: 'd63c5145-78a0-45a8-a236-032dc5d3b806'
+  PropagateID: 'd63c5145-78a0-45a8-a236-032dc5d3b806'
+  ReservedCode1: '2dc914b6-b659-45ee-9140-7e25159ee640'
+  ReservedCode2: '2dc914b6-b659-45ee-9140-7e25159ee640'
 ---
 
 # NavSync
 
-一款极简的网址导航工具，支持云端同步。基于 Vue 3 + Vite + TypeScript 构建，部署在 Cloudflare Pages，采用 **favicon 代理 + 边缘缓存** 架构。
+一款极简的网址导航工具，支持云端同步。基于 Vue 3 + Vite + TypeScript 构建，部署在 Cloudflare Pages，采用 **favicon 代理 + KV 缓存** 架构。
 
 - 图标获取不再由浏览器直连第三方接口，而是走本站 Cloudflare Pages Functions 代理
-- 图标经后端拉取后写入 **Cloudflare 边缘缓存**（Cache API），同域名只回源一次，加载更快更稳
-- **零配置**：无需手动创建 KV 命名空间，部署即用
+- 图标经后端拉取后写入 **Cloudflare KV** 缓存，同域名只回源一次，加载更快更稳
 
 ## 介绍
 
@@ -35,7 +34,7 @@ NavSync 旨在为用户提供纯粹、简洁、高效的上网体验。它保留
 - **暴力破解防护**（5 次口令错误后锁定 IP 15 分钟）
 - **跨设备自动同步**（换设备后自动查找云端已有配置，无需手动同步 ID）
 - **Favicon 懒加载**（图标异步加载、骨架占位、加载失败回退首字母彩色图标）
-- **Favicon 代理 + 边缘缓存**（后端统一代理第三方图标源，Cloudflare 边缘缓存，同一域名仅回源一次）
+- **Favicon 代理 + KV 缓存**（后端统一代理第三方图标源，KV 缓存 30 天，同一域名仅回源一次）
 
 ## 云端同步架构
 
@@ -80,38 +79,64 @@ GitHub Token 用于后端代你操作 Gist（创建、读取、更新）。**仅
 > 也可以直接点击这个快捷链接，会自动帮你选好 `gist` 权限：
 > [创建 Token（预设 gist 权限）](https://github.com/settings/tokens/new?description=NavSync%20Cloud%20Sync&scopes=gist)
 
-### 第三步：在 Cloudflare Pages 部署
+### 第三步：创建 KV 命名空间
+
+favicon 缓存需要用到 Cloudflare KV，提前创建好，后续绑定时直接选用。
+
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com)（右上角可切换语言）
+2. 左侧菜单进入 **Workers 和 Pages**（Workers & Pages）→ **KV**
+3. 点击 **创建命名空间**（Create namespace）
+4. **命名空间名称填 `navsync-favicon`**（建议照填，方便后续对照；也可以取其他名字，不影响功能）
+5. 点击 **添加**（Add）
+
+### 第四步：在 Cloudflare Pages 部署
 
 > 以下路径按 Cloudflare **中文界面** 写法，英文界面可对照括号里的英文。
 
-1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com)（右上角可切换语言）
-2. 左侧菜单进入 **Workers 和 Pages**（Workers & Pages）→ 点击 **创建应用程序**（Create）→ 选择 **Pages** → 点击 **连接到 Git**（Connect to Git）
-3. 注意选的是 Pages，不是 Workers。页面底部有一行小字链接，点击可切换类型
-4. 授权 Cloudflare 访问你的 GitHub，选择你 Fork 的 `NavSync` 仓库
-5. 填写构建设置：
+1. 回到 **Workers 和 Pages**，点击 **创建应用程序**（Create）→ 选择 **Pages** → 点击 **连接到 Git**（Connect to Git）
+2. 注意选的是 Pages，不是 Workers。页面底部有一行小字链接，点击可切换类型
+3. 授权 Cloudflare 访问你的 GitHub，选择你 Fork 的 `NavSync` 仓库
+4. 填写构建设置：
    - **框架预设**（Framework preset）：`Vue`
    - **构建命令**（Build command）：`npm run build`
    - **构建输出目录**（Build output directory）：`dist`
-6. 展开底部的 **高级**（Advanced）设置，配置以下环境变量。共 3 项，均为环境变量：
+5. 展开底部的 **高级**（Advanced）设置，配置以下变量。共 5 项，分两类：
 
-   | 变量名 | 类型 | 必填 | 说明 | 示例值 |
+   **环境变量**（Environment variables）：
+
+   | 变量名 | 必填 | 说明 | 示例值 |
+   | --- | --- | --- | --- |
+   | `GITHUB_TOKEN` | **是** | 第二步获取的 GitHub Token，仅需 `gist` 权限 | `ghp_xxxxxxxxxxxx` |
+   | `CLOUD_PASSWORD` | 否 | 访问口令，同步时需输入；留空则不启用口令保护 | `随机生成的复杂密码` |
+   | `FAVICON_SOURCE` | 否 | favicon 第三方图标源：`duckduckgo`（默认）/ `0x3` / `google` | `duckduckgo` |
+   | `FAVICON_TTL` | 否 | favicon 缓存时长（秒），范围 `60` ~ `2592000`，默认 30 天 | `2592000` |
+
+   **KV 绑定**（Bindings，不是环境变量）：
+
+   | 变量名（binding） | 类型 | 必填 | KV 命名空间 | 说明 |
    | --- | --- | --- | --- | --- |
-   | `GITHUB_TOKEN` | 环境变量 | **是** | 第二步获取的 GitHub Token，仅需 `gist` 权限 | `ghp_xxxxxxxxxxxx` |
-   | `CLOUD_PASSWORD` | 环境变量 | 否 | 访问口令，同步时需输入；留空则不启用口令保护 | `随机生成的复杂密码` |
-   | `FAVICON_SOURCE` | 环境变量 | 否 | favicon 第三方图标源：`duckduckgo`（默认）/ `0x3` / `google` | `duckduckgo` |
+   | `FAVICON_KV` | KV 命名空间 | **是** | `navsync-favicon`（第三步创建的） | favicon 代理缓存，变量名必须填 `FAVICON_KV` |
 
-   > 必填的只有 `GITHUB_TOKEN`（云端同步必需）；其余两个可选，有默认值。
-   > favicon 缓存使用 Cloudflare 边缘缓存（Cache API），**无需创建 KV 命名空间，无需绑定，部署即用**。
+   > 必填的只有两个：`GITHUB_TOKEN`（云端同步必需）和 `FAVICON_KV`（favicon 代理必需）；其余三个可选，有默认值。
+
+6. 绑定 KV 命名空间（`FAVICON_KV`）：
+   - 在创建向导的 **绑定**（Bindings）区域点击 **添加绑定**（Add binding）
+     （若创建时找不到该区域，部署完成后进入 **设置 → 绑定**，Settings → Bindings）
+   - **类型**（Type）选 **KV 命名空间**（KV namespace）
+   - **变量名称**（Variable name）填 **`FAVICON_KV`**（必须与上表一致）
+   - **KV 命名空间** 选第三步创建的 **`navsync-favicon`**
+   - 点保存
+   - 若是在部署完成后再补绑定，保存后需到 **部署**（Deployments）页面点 **重新部署**（Redeploy）才会生效
 
 7. 点击 **保存并部署**（Save and Deploy）
 
-### 第四步：等待部署完成
+### 第五步：等待部署完成
 
 Cloudflare 会自动拉取代码、安装依赖、构建并部署。通常 2-3 分钟内完成。
 
 部署成功后，你会得到一个 `https://your-project.pages.dev` 的地址。也可以在 Pages 项目的 **自定义域**（Custom domains）中绑定自己的域名。
 
-### 第五步：开始使用
+### 第六步：开始使用
 
 1. 打开你的网站地址
 2. 进入设置 → 云端同步，点击「连接云端同步」
@@ -124,20 +149,25 @@ Cloudflare 会自动拉取代码、安装依赖、构建并部署。通常 2-3 �
 
 ## 环境变量速查
 
-部署步骤第 6 步已包含完整配置。以下是常见疑问速查：
+部署步骤已包含完整配置。以下是常见疑问速查：
 
 | 问题 | 回答 |
 | --- | --- |
 | `GITHUB_TOKEN` 在哪设置？ | Pages 项目 → **设置 → 环境变量**（Settings → Environment variables）→ 添加；或部署向导的 **高级**（Advanced）区域 |
 | `CLOUD_PASSWORD` 不设置会怎样？ | 不启用口令保护，任何人都能同步你的配置。建议设置 |
+| `FAVICON_KV` 为什么不在环境变量里？ | 它是 **KV 命名空间绑定**（KV namespace binding），需在 **设置 → 绑定**（Settings → Bindings）添加，属于另一类配置 |
+| KV 命名空间叫什么？ | 建议命名 `navsync-favicon`，也可以取其他名字，只要绑定时选对即可 |
+| 绑定时变量名填什么？ | **必须填 `FAVICON_KV`**，这是代码中读取的名称，不能改 |
+| 补绑 KV 后不生效？ | 重新部署一次即可：**部署 → 重新部署**（Deployments → Redeploy） |
 | `FAVICON_SOURCE` 能填什么？ | `duckduckgo`（默认）/ `0x3` / `google`，三选一 |
-| favicon 缓存需要配置吗？ | **不需要**。使用 Cloudflare 边缘缓存（Cache API），零配置，部署即用 |
+| `FAVICON_TTL` 范围？ | `60` ~ `2592000` 秒，超出会自动钳制到合法范围 |
 
 ### Favicon 代理说明
 
 - 前端 `getFaviconUrl` 不再直连第三方，而是请求本站 `/favicon/{domain}.png`
-- 该路由由 `functions/favicon/[id].ts` 处理：先查边缘缓存，未命中则由后端代理请求图标源（DuckDuckGo / 0x3 / Google），成功后写入缓存
+- 该路由由 `functions/favicon/[id].ts` 处理：先查 KV 缓存，未命中则由后端代理请求图标源（DuckDuckGo / 0x3 / Google），成功后写入 KV
 - 同一域名并发请求会去重（in-flight 合并），确保每个域名仅回源一次
+- KV 带 Content-Type 元数据，第三方图标源（google 返回 PNG）时缓存命中仍返回正确类型
 - 第三方接口失败时返回 5xx，前端自动降级为首字母彩色图标
 - 常见网站（京东、淘宝、拼多多等）仍使用 `public/site/` 下的本地 SVG，不走代理
 
@@ -158,7 +188,7 @@ Cloudflare 会自动拉取代码、安装依赖、构建并部署。通常 2-3 �
 | `/api/upload` | POST | 上传配置到云端 Gist |
 | `/api/download` | GET | 从云端 Gist 下载配置 |
 | `/api/user` | GET | 获取 GitHub 用户信息（验证 Token 有效性） |
-| `/favicon/{domain}.png` | GET | 网站图标代理（查边缘缓存 → 回源 → 写缓存） |
+| `/favicon/{domain}.png` | GET | 网站图标代理（查 KV 缓存 → 回源 → 写缓存） |
 
 ## 本地开发
 
@@ -182,9 +212,10 @@ npm run preview
 GITHUB_TOKEN=ghp_xxxxxxxxxxxx
 CLOUD_PASSWORD=your-password
 FAVICON_SOURCE=duckduckgo
+FAVICON_TTL=2592000
 ```
 
-> 本地运行 `npm run dev` 时，favicon 代理的边缘缓存需要 `wrangler pages dev` 环境（Cache API 在本地开发时可能不可用）。直接在浏览器地址栏访问 `/favicon/{域名}.png` 可验证回源行为。
+> 本地运行 `npm run dev` 时，favicon 代理需要 KV：可用 `wrangler pages dev` 配合本地 KV 模拟，或直接在浏览器地址栏访问 `/favicon/{域名}.png` 验证部署后的行为。本地无 KV 时该路由会正常回源但无法缓存。
 
 ## 更新
 
