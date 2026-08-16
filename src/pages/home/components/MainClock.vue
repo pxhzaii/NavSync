@@ -2,22 +2,16 @@
 import dayjs from 'dayjs'
 import solarLunar from 'solarlunar-es'
 
-const date = ref('')
 const time = ref('')
-const lunarDate = ref('')
-const week = ref('')
 
-let timeInterval: NodeJS.Timer
+let timeInterval: ReturnType<typeof setInterval> | undefined
 
 function refreshTime() {
   const now = dayjs().format('YYYY年MM月DD日 HH:mm')
   const timeArr = now.split(' ')
-  date.value = timeArr[0]
   time.value = timeArr[1]
-  if (!lunarDate.value || time.value === '00:00') {
+  if (time.value === '00:00')
     getDate()
-  }
-  return refreshTime
 }
 
 function getDate() {
@@ -25,8 +19,9 @@ function getDate() {
   const dateArr = now.split('-').map(val => Number(val))
   const lunar = solarLunar.solar2lunar(dateArr[0], dateArr[1], dateArr[2])
   if (typeof lunar !== 'number') {
-    lunarDate.value = `${lunar.gzYear}${lunar.animal}年${lunar.monthCn}${lunar.dayCn}`
-    week.value = lunar.ncWeek
+    // 农历信息已计算但不展示，保留以备后续使用
+    const _lunar = lunar
+    return _lunar
   }
 }
 
@@ -50,7 +45,8 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  clearInterval(timeInterval)
+  if (timeInterval)
+    clearInterval(timeInterval)
 })
 </script>
 
