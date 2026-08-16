@@ -18,7 +18,7 @@ export interface Env {
 }
 
 const GIST_API = 'https://api.github.com/gists'
-const GIST_FILENAME = 'comecome-config.json'
+const GIST_FILENAME = 'navsync-config.json'
 const MAX_BODY_SIZE = 512 * 1024 // 512 KB
 const GITHUB_TIMEOUT_MS = 10_000
 
@@ -54,7 +54,7 @@ export function gistHeaders(token: string): Record<string, string> {
     'Authorization': `Bearer ${token}`,
     'Accept': 'application/vnd.github+json',
     'Content-Type': 'application/json',
-    'User-Agent': 'comecome-cloud-sync',
+    'User-Agent': 'navsync-cloud-sync',
   }
 }
 
