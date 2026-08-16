@@ -69,6 +69,14 @@ const webdavStore = useWebDavStore()
       >
         从 WebDAV 恢复
       </n-button>
+      <n-button
+        quaternary
+        type="error"
+        :disabled="webdavStore.isTesting || webdavStore.isBackingUp || webdavStore.isRestoring"
+        @click="webdavStore.handleClear"
+      >
+        清除配置
+      </n-button>
     </div>
 
     <div mt-12 text-12 opacity-50>

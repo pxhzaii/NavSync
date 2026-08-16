@@ -13,6 +13,23 @@ import type { Category, Settings } from '@/types'
 export const WEBDAV_PROXY = 'https://webdav.5as.cn/api/webdav'
 export const WEBDAV_DEFAULT_PATH = '/navsync-backup.json'
 
+/** 代理允许转发的目标域名白名单（来自 keyvault-webdav-proxy 源码） */
+const ALLOWED_HOSTS = [
+  'dav.jianguoyun.com',
+  'webdav.pcloud.com',
+  'webdav.hidrive.strato.com',
+  'dav.infini-cloud.net',
+]
+
+/** UTF-8 安全的 Base64 编码（btoa 无法处理中文等非 Latin-1 字符） */
+function utf8ToBase64(str: string): string {
+  const bytes = new TextEncoder().encode(str)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i++)
+    binary += String.fromCharCode(bytes[i])
+  return btoa(binary)
+}
+
 /** 本地存储 key */
 const KEY_WEBDAV_URL = 'webdav_url'
 const KEY_USER = 'webdav_user'
@@ -64,6 +81,7 @@ export function setWebDavLastBackup(time: string) {
   localStorage.setItem(KEY_LAST_BACKUP, time)
 }
 
+/** 清除本地保存的全部 WebDAV 配置 */
 export function clearWebDavStorage() {
   localStorage.removeItem(KEY_WEBDAV_URL)
   localStorage.removeItem(KEY_USER)
@@ -81,6 +99,15 @@ function buildWebDavUrl(serverUrl: string, filePath: string): string {
   return base + path
 }
 
+/** 校验 serverUrl 是否为代理白名单域名（避免 405/无效转发） */
+function validateServerUrl(serverUrl: string): string {
+  const base = serverUrl.trim().replace(/\/+$/, '')
+  const host = base.replace(/^https?:\/\//i, '').split('/')[0].split(':')[0].toLowerCase()
+  if (!ALLOWED_HOSTS.includes(host))
+    return `服务器地址不在代理白名单内（支持: ${ALLOWED_HOSTS.join(', ')}）`
+  return ''
+}
+
 /** 调用 WebDAV 代理（返回包装 JSON） */
 interface ProxyResponse {
   status: number
@@ -91,7 +118,7 @@ interface ProxyResponse {
 
 async function proxyFetch(url: string, method: string, username: string, password: string, body?: string): Promise<ProxyResponse> {
   const headers = new Headers()
-  headers.set('Authorization', `Basic ${btoa(`${username}:${password}`)}`)
+  headers.set('Authorization', `Basic ${utf8ToBase64(`${username}:${password}`)}`)
   if (body !== undefined)
     headers.set('Content-Type', 'application/octet-stream')
 
@@ -121,6 +148,9 @@ async function proxyFetch(url: string, method: string, username: string, passwor
 export async function testWebDavConnection(config: WebDavConfig): Promise<{ ok: boolean; error?: string }> {
   try {
     const url = buildWebDavUrl(config.serverUrl, config.filePath)
+    const hostErr = validateServerUrl(config.serverUrl)
+    if (hostErr)
+      return { ok: false, error: hostErr }
     const result = await proxyFetch(url, 'GET', config.username, config.password)
     if (result.status >= 200 && result.status < 300)
       return { ok: true }
@@ -139,6 +169,9 @@ export async function testWebDavConnection(config: WebDavConfig): Promise<{ ok: 
 export async function backupToWebDav(data: Category[], settings: Settings, config: WebDavConfig): Promise<{ success: boolean; error?: string }> {
   try {
     const url = buildWebDavUrl(config.serverUrl, config.filePath)
+    const hostErr = validateServerUrl(config.serverUrl)
+    if (hostErr)
+      return { success: false, error: hostErr }
     const body = JSON.stringify({
       data,
       settings,
@@ -161,6 +194,9 @@ export async function backupToWebDav(data: Category[], settings: Settings, confi
 export async function restoreFromWebDav(config: WebDavConfig): Promise<{ success: boolean; data?: WebDavBackup; error?: string }> {
   try {
     const url = buildWebDavUrl(config.serverUrl, config.filePath)
+    const hostErr = validateServerUrl(config.serverUrl)
+    if (hostErr)
+      return { success: false, error: hostErr }
     const res = await proxyFetch(url, 'GET', config.username, config.password)
     if (res.status === 404)
       return { success: false, error: '云端备份不存在，请先执行一次备份' }

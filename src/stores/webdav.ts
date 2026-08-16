@@ -1,6 +1,7 @@
 import {
   WEBDAV_DEFAULT_PATH,
   backupToWebDav,
+  clearWebDavStorage,
   getWebDavConfig,
   getWebDavLastBackup,
   restoreFromWebDav,
@@ -110,28 +111,45 @@ export const useWebDavStore = defineStore('webdav', () => {
       window.$message?.warning(err, { duration: 3000 })
       return
     }
-    const siteStore = useSiteStore()
-    const settingStore = useSettingStore()
+    // 恢复会覆盖本地配置，属破坏性操作，先二次确认
+    window.$dialog?.warning({
+      title: '从 WebDAV 恢复',
+      content: '恢复将覆盖当前本地配置，确定继续吗？',
+      positiveText: '确定恢复',
+      negativeText: '取消',
+      onPositiveClick: async () => {
+        const siteStore = useSiteStore()
+        const settingStore = useSettingStore()
 
-    isRestoring.value = true
-    const result = await restoreFromWebDav(getConfig())
-    isRestoring.value = false
+        isRestoring.value = true
+        const result = await restoreFromWebDav(getConfig())
+        isRestoring.value = false
 
-    if (result.success && result.data) {
-      siteStore.setData(result.data.data)
-      settingStore.setSettings(result.data.settings)
-      toggleTheme(result.data.settings.theme)
-      toggleSiteSytle()
-      siteStore.cateIndex = 0
-      saveConfig()
-      const now = new Date().toLocaleString()
-      setWebDavLastBackup(now)
-      lastBackup.value = now
-      window.$message?.success('已从 WebDAV 恢复配置', { duration: 3000 })
-    }
-    else {
-      window.$message?.error(result.error || '恢复失败', { duration: 3000 })
-    }
+        if (result.success && result.data) {
+          siteStore.setData(result.data.data)
+          settingStore.setSettings(result.data.settings)
+          toggleTheme(result.data.settings.theme)
+          toggleSiteSytle()
+          siteStore.cateIndex = 0
+          useRenderStore().refreshSiteGroupList()
+          saveConfig()
+          window.$message?.success('已从 WebDAV 恢复配置', { duration: 3000 })
+        }
+        else {
+          window.$message?.error(result.error || '恢复失败', { duration: 3000 })
+        }
+      },
+    })
+  }
+
+  function handleClear() {
+    clearWebDavStorage()
+    serverUrl.value = ''
+    username.value = ''
+    password.value = ''
+    filePath.value = WEBDAV_DEFAULT_PATH
+    lastBackup.value = ''
+    window.$message?.success('已清除 WebDAV 配置', { duration: 3000 })
   }
 
   return {
@@ -146,5 +164,6 @@ export const useWebDavStore = defineStore('webdav', () => {
     handleTest,
     handleBackup,
     handleRestore,
+    handleClear,
   }
 })
