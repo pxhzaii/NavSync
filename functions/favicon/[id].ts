@@ -1,37 +1,45 @@
 /**
- * GET /favicon/{domain}.png - 网站图标代理（Pages Functions + 边缘缓存）
+ * GET /favicon/{domain}.png - 网站图标代理（Pages Functions + KV 缓存）
  *
  * 工作流程：
- *   1. 请求到达 → 先查 Cloudflare 边缘缓存（Cache API），命中直接返回
+ *   1. 请求到达 → 先查 KV 缓存，命中直接返回（含正确的 Content-Type）
  *   2. 未命中 → 后端代理请求第三方图标源（DuckDuckGo / 0x3 / Google）
- *   3. 成功 → 写入边缘缓存并返回；失败 → 返回 5xx，前端降级为首字母
- *
- * 优势：
- *   - 零配置：无需手动创建 KV 命名空间，部署即用
- *   - 边缘缓存：利用 Cloudflare Cache API，按边缘节点缓存
+ *   3. 成功 → 写入 KV 缓存（默认 30 天）并返回；失败 → 返回 5xx，前端降级为首字母
  *
  * 并发保护：
  *   - 同一域名的并发回源请求单飞（in-flight 去重），仅回源一次后共享结果
  *
- * 环境变量（可选，在 Cloudflare Pages Dashboard > Settings > Environment variables 中设置）：
- *   FAVICON_SOURCE  - 图标源：duckduckgo（默认）/ 0x3 / google
- *   FAVICON_TTL     - 缓存时长（秒），范围 60 ~ 86400，默认 86400（1 天）
+ * 前置条件（Cloudflare Pages Dashboard 配置）：
+ *   - KV namespace 绑定：binding 名称必须为 FAVICON_KV
+ *     Pages 项目 → Settings → Bindings → KV namespace → 变量名填 FAVICON_KV
+ *   - 环境变量（可选）：
+ *     FAVICON_SOURCE  - 图标源：duckduckgo（默认）/ 0x3 / google
+ *     FAVICON_TTL     - 缓存时长（秒），范围 60 ~ 2592000，默认 2592000（30 天）
  */
 import type { Env } from '../_shared'
 
-/** Pages Functions 环境（在原 Env 基础上增加可选配置） */
+/** Pages Functions 环境（在原 Env 基础上增加 KV 绑定） */
 export interface FaviconEnv extends Env {
+  FAVICON_KV: KVNamespace
   FAVICON_SOURCE?: string
   FAVICON_TTL?: string
 }
 
-/** Cloudflare Cache API TTL 合法范围（秒） */
+/** 缓存元数据（随 KV metadata 存储，用于缓存命中时还原正确的 Content-Type） */
+interface CacheMeta {
+  contentType: string
+}
+
+/** Cloudflare KV expirationTtl 合法范围（秒） */
 const TTL_MIN = 60
-const TTL_MAX = 86_400 // 1 天（Cache API 上限）
-const DEFAULT_TTL = 86_400
+const TTL_MAX = 2_592_000 // 30 天（KV 上限）
+const DEFAULT_TTL = 2_592_000
 
 /** 回源超时 */
 const UPSTREAM_TIMEOUT_MS = 8_000
+
+/** CDN 缓存响应头（浏览器缓存 1 天） */
+const CACHE_HEADER = 'public, max-age=86400, s-maxage=86400'
 
 /** 合法域名格式（防止恶意 URL / SSRF 探测） */
 const DOMAIN_RE = /^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/
@@ -45,7 +53,7 @@ function sanitizeDomain(token: string): string | null {
   return domain
 }
 
-/** 钳制 TTL 到合法范围（[60, 86400]），非法输入回落默认值 */
+/** 钳制 TTL 到 KV 合法范围（[60, 2592000]），非法输入回落默认值 */
 function clampTtl(raw: number): number {
   if (!Number.isFinite(raw) || raw <= 0)
     return DEFAULT_TTL
@@ -92,15 +100,10 @@ class UpstreamError extends Error {
   }
 }
 
-/** 构造缓存 key（使用 Request URL） */
-function buildCacheKey(url: string): Request {
-  return new Request(url, { method: 'GET' })
-}
-
-/** 回源第三方并写入边缘缓存，返回图标数据与 Content-Type */
+/** 回源第三方并写入 KV 缓存，返回图标数据与 Content-Type */
 async function fetchAndCache(
-  cache: Cache,
-  cacheKey: Request,
+  kv: KVNamespace,
+  key: string,
   url: string,
   ttl: number,
 ): Promise<{ buffer: ArrayBuffer; contentType: string }> {
@@ -114,14 +117,8 @@ async function fetchAndCache(
   if (buffer.byteLength === 0)
     throw new UpstreamError(502, 'Empty favicon')
 
-  // 写入边缘缓存（失败不影响本次响应，只是不缓存）
-  const cachedResponse = new Response(buffer, {
-    headers: {
-      'Content-Type': contentType,
-      'Cache-Control': `public, max-age=${ttl}, s-maxage=${ttl}`,
-    },
-  })
-  await cache.put(cacheKey, cachedResponse).catch(() => {})
+  // 写入 KV（失败不影响本次响应，只是不缓存）
+  await kv.put(key, buffer, { expirationTtl: ttl, metadata: { contentType } }).catch(() => {})
 
   return { buffer, contentType }
 }
@@ -130,7 +127,7 @@ async function fetchAndCache(
 const inflight = new Map<string, Promise<{ buffer: ArrayBuffer; contentType: string }>>()
 
 export const onRequestGet: PagesFunction<FaviconEnv> = async (context) => {
-  const { env, params, request } = context
+  const { env, params } = context
   const token = String((params as Record<string, string>).id || '')
 
   // 1. 校验 token 是否为合法域名
@@ -138,24 +135,24 @@ export const onRequestGet: PagesFunction<FaviconEnv> = async (context) => {
   if (!domain)
     return new Response('Bad Request', { status: 400 })
 
+  const kv = env.FAVICON_KV
+  const kvKey = `favicon:${domain}`
   const ttl = clampTtl(Number(env.FAVICON_TTL) || DEFAULT_TTL)
-  const cacheKey = buildCacheKey(request.url)
 
-  // 2. 查边缘缓存
-  const cache = caches.default
+  // 2. 查 KV 缓存（带 metadata，命中时返回正确的 Content-Type）
   try {
-    const cached = await cache.match(cacheKey)
-    if (cached) {
-      return new Response(cached.body, {
+    const { value, metadata } = await kv.getWithMetadata<CacheMeta>(kvKey, 'arrayBuffer')
+    if (value) {
+      return new Response(value, {
         headers: {
-          'Content-Type': cached.headers.get('Content-Type') || 'image/x-icon',
-          'Cache-Control': cached.headers.get('Cache-Control') || `public, max-age=${ttl}`,
+          'Content-Type': metadata?.contentType || 'image/x-icon',
+          'Cache-Control': CACHE_HEADER,
         },
       })
     }
   }
   catch {
-    // 缓存读取失败不阻塞，继续走回源
+    // KV 读取失败不阻塞，继续走回源
   }
 
   // 3. 回源第三方图标服务（同一域名并发请求共享同一次回源）
@@ -165,7 +162,7 @@ export const onRequestGet: PagesFunction<FaviconEnv> = async (context) => {
 
   let pending = inflight.get(inflightKey)
   if (!pending) {
-    pending = fetchAndCache(cache, cacheKey, upstreamUrl, ttl).finally(() => {
+    pending = fetchAndCache(kv, kvKey, upstreamUrl, ttl).finally(() => {
       inflight.delete(inflightKey)
     })
     inflight.set(inflightKey, pending)
@@ -176,7 +173,7 @@ export const onRequestGet: PagesFunction<FaviconEnv> = async (context) => {
     return new Response(buffer, {
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': `public, max-age=${ttl}, s-maxage=${ttl}`,
+        'Cache-Control': CACHE_HEADER,
       },
     })
   }
