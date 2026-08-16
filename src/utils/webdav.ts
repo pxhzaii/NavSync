@@ -244,8 +244,9 @@ export async function testWebDavConnection(config: WebDavConfig): Promise<{ ok: 
       return { ok: true }
     if (result.status === 401 || result.status === 403)
       return { ok: false, error: '用户名或密码错误（401/403）' }
-    if (result.status === 404) {
-      // 文件不存在视为连接正常；顺便预创建父目录，确保后续备份不因目录缺失而失败
+    if (result.status === 404 || result.status === 409) {
+      // 404：文件不存在；409：父目录不存在（坚果云等对 GET 不存在的子路径也返回 409）
+      // 均视为连接正常，顺便预创建父目录
       const mkErr = await ensureParentDirs(config)
       if (mkErr)
         return { ok: true, notice: `连接正常，但父目录异常：${mkErr}` }
