@@ -3,18 +3,19 @@ AIGC:
   ContentProducer: '001191110102MAD55U9H0F10002'
   ContentPropagator: '001191110102MAD55U9H0F10002'
   Label: '1'
-  ProduceID: '2d9dcd01-11ed-4251-91f0-efc776cce681'
-  PropagateID: '2d9dcd01-11ed-4251-91f0-efc776cce681'
-  ReservedCode1: '0b4cc81f-7500-4ee7-8689-8bc0f6508322'
-  ReservedCode2: '0b4cc81f-7500-4ee7-8689-8bc0f6508322'
+  ProduceID: '69c1088e-cdae-4cd5-b934-4cc6e01a5b52'
+  PropagateID: '69c1088e-cdae-4cd5-b934-4cc6e01a5b52'
+  ReservedCode1: '99727caf-b1b4-4f10-a61e-a9e90e045183'
+  ReservedCode2: '99727caf-b1b4-4f10-a61e-a9e90e045183'
 ---
 
 # NavSync
 
-一款极简的网址导航工具，支持云端同步。基于 Vue 3 + Vite + TypeScript 构建，部署在 Cloudflare Pages，采用 **favicon 代理 + KV 缓存** 架构。
+一款极简的网址导航工具，支持云端同步。基于 Vue 3 + Vite + TypeScript 构建，部署在 Cloudflare Pages，采用 **favicon 代理 + 边缘缓存** 架构。
 
 - 图标获取不再由浏览器直连第三方接口，而是走本站 Cloudflare Pages Functions 代理
-- 图标经后端拉取后写入 **Cloudflare KV** 缓存，同域名只回源一次，加载更快更稳
+- 图标经后端拉取后写入 **Cloudflare 边缘缓存**（Cache API），同域名只回源一次，加载更快更稳
+- **零配置**：无需手动创建 KV 命名空间，部署即用
 
 ## 介绍
 
@@ -34,7 +35,7 @@ NavSync 旨在为用户提供纯粹、简洁、高效的上网体验。它保留
 - **暴力破解防护**（5 次口令错误后锁定 IP 15 分钟）
 - **跨设备自动同步**（换设备后自动查找云端已有配置，无需手动同步 ID）
 - **Favicon 懒加载**（图标异步加载、骨架占位、加载失败回退首字母彩色图标）
-- **Favicon 代理 + KV 缓存**（后端统一代理第三方图标源，KV 缓存 30 天，同一域名仅回源一次）
+- **Favicon 代理 + 边缘缓存**（后端统一代理第三方图标源，Cloudflare 边缘缓存，同一域名仅回源一次）
 
 ## 云端同步架构
 
@@ -76,6 +77,9 @@ GitHub Token 用于后端代你操作 Gist（创建、读取、更新）。**仅
 4. 点击页面底部的 **Generate token**
 5. 复制生成的 Token（格式类似 `ghp_xxxxxxxxxxxx`），**页面关闭后无法再看到**
 
+> 也可以直接点击这个快捷链接，会自动帮你选好 `gist` 权限：
+> [创建 Token（预设 gist 权限）](https://github.com/settings/tokens/new?description=NavSync%20Cloud%20Sync&scopes=gist)
+
 ### 第三步：在 Cloudflare Pages 部署
 
 > 以下路径按 Cloudflare **中文界面** 写法，英文界面可对照括号里的英文。
@@ -88,25 +92,18 @@ GitHub Token 用于后端代你操作 Gist（创建、读取、更新）。**仅
    - **框架预设**（Framework preset）：`Vue`
    - **构建命令**（Build command）：`npm run build`
    - **构建输出目录**（Build output directory）：`dist`
-6. 展开底部的 **高级**（Advanced）设置，配置以下变量。共 5 项，分两类：
+6. 展开底部的 **高级**（Advanced）设置，配置以下环境变量。共 3 项，均为环境变量：
 
    | 变量名 | 类型 | 必填 | 说明 | 示例值 |
    | --- | --- | --- | --- | --- |
    | `GITHUB_TOKEN` | 环境变量 | **是** | 第二步获取的 GitHub Token，仅需 `gist` 权限 | `ghp_xxxxxxxxxxxx` |
    | `CLOUD_PASSWORD` | 环境变量 | 否 | 访问口令，同步时需输入；留空则不启用口令保护 | `随机生成的复杂密码` |
    | `FAVICON_SOURCE` | 环境变量 | 否 | favicon 第三方图标源：`duckduckgo`（默认）/ `0x3` / `google` | `duckduckgo` |
-   | `FAVICON_TTL` | 环境变量 | 否 | favicon 缓存时长（秒），范围 `60` ~ `2592000`，默认 30 天 | `2592000` |
-   | `FAVICON_KV` | KV 绑定 | **是** | favicon 代理缓存命名空间（**不是环境变量**，见第 7 步） | `navsync-favicon` |
 
-   > 必填的只有两个：`GITHUB_TOKEN`（云端同步必需）和 `FAVICON_KV`（favicon 代理必需）；其余三个可选，有默认值。
+   > 必填的只有 `GITHUB_TOKEN`（云端同步必需）；其余两个可选，有默认值。
+   > favicon 缓存使用 Cloudflare 边缘缓存（Cache API），**无需创建 KV 命名空间，无需绑定，部署即用**。
 
-7. 绑定 KV 命名空间（`FAVICON_KV`，favicon 缓存必需）：
-   - 先到 **Workers 和 Pages → KV**，点击 **创建命名空间**（Create namespace），新建一个命名空间（名字随意，如 `navsync-favicon`）
-   - 回到 Pages 项目，在创建向导的 **绑定**（Bindings）区域（若创建时找不到，部署完成后进入 **设置 → 绑定**）点击 **添加绑定**（Add binding）
-   - **类型**（Type）选 **KV 命名空间**（KV namespace），**变量名称**（Variable name）填 **`FAVICON_KV`**，**KV 命名空间** 选刚创建的命名空间，点保存
-   - 若是在部署完成后再补绑定，保存后需到项目 **部署**（Deployments）页面点 **重新部署**（Redeploy）才会生效
-
-8. 点击 **保存并部署**（Save and Deploy）
+7. 点击 **保存并部署**（Save and Deploy）
 
 ### 第四步：等待部署完成
 
@@ -114,25 +111,33 @@ Cloudflare 会自动拉取代码、安装依赖、构建并部署。通常 2-3 �
 
 部署成功后，你会得到一个 `https://your-project.pages.dev` 的地址。也可以在 Pages 项目的 **自定义域**（Custom domains）中绑定自己的域名。
 
+### 第五步：开始使用
+
+1. 打开你的网站地址
+2. 进入设置 → 云端同步，点击「连接云端同步」
+3. 输入你设置的访问口令（`CLOUD_PASSWORD`），点击验证
+4. 验证通过后点击「上传到云端」即可同步配置
+5. 换设备时，重复上述步骤后点击「从云端拉取」，会自动查找并下载你之前上传的配置
+
+> 如果未设置 `CLOUD_PASSWORD` 环境变量，则无需口令即可同步（不推荐，任何人都能操作）。
+> 连续 5 次口令错误后，该 IP 将被锁定 15 分钟。
+
 ## 环境变量速查
 
-部署步骤第 6、7 步已包含完整配置。以下是常见疑问速查：
+部署步骤第 6 步已包含完整配置。以下是常见疑问速查：
 
 | 问题 | 回答 |
 | --- | --- |
 | `GITHUB_TOKEN` 在哪设置？ | Pages 项目 → **设置 → 环境变量**（Settings → Environment variables）→ 添加；或部署向导的 **高级**（Advanced）区域 |
 | `CLOUD_PASSWORD` 不设置会怎样？ | 不启用口令保护，任何人都能同步你的配置。建议设置 |
-| `FAVICON_KV` 为什么不在环境变量里？ | 它是 **KV 命名空间绑定**（KV namespace binding），需在 **设置 → 绑定**（Settings → Bindings）添加，属于另一类配置 |
-| 补绑 KV 后不生效？ | 重新部署一次即可：**部署 → 重新部署**（Deployments → Redeploy） |
 | `FAVICON_SOURCE` 能填什么？ | `duckduckgo`（默认）/ `0x3` / `google`，三选一 |
-| `FAVICON_TTL` 范围？ | `60` ~ `2592000` 秒，超出会自动钳制到合法范围 |
+| favicon 缓存需要配置吗？ | **不需要**。使用 Cloudflare 边缘缓存（Cache API），零配置，部署即用 |
 
 ### Favicon 代理说明
 
 - 前端 `getFaviconUrl` 不再直连第三方，而是请求本站 `/favicon/{domain}.png`
-- 该路由由 `functions/favicon/[id].ts` 处理：先查 KV 缓存，未命中则由后端代理请求图标源（DuckDuckGo / 0x3 / Google），成功后写入 KV
+- 该路由由 `functions/favicon/[id].ts` 处理：先查边缘缓存，未命中则由后端代理请求图标源（DuckDuckGo / 0x3 / Google），成功后写入缓存
 - 同一域名并发请求会去重（in-flight 合并），确保每个域名仅回源一次
-- KV 带 Content-Type 元数据，第三方图标源（google 返回 PNG）时缓存命中仍返回正确类型
 - 第三方接口失败时返回 5xx，前端自动降级为首字母彩色图标
 - 常见网站（京东、淘宝、拼多多等）仍使用 `public/site/` 下的本地 SVG，不走代理
 
@@ -153,7 +158,7 @@ Cloudflare 会自动拉取代码、安装依赖、构建并部署。通常 2-3 �
 | `/api/upload` | POST | 上传配置到云端 Gist |
 | `/api/download` | GET | 从云端 Gist 下载配置 |
 | `/api/user` | GET | 获取 GitHub 用户信息（验证 Token 有效性） |
-| `/favicon/{domain}.png` | GET | 网站图标代理（查 KV 缓存 → 回源 → 写缓存） |
+| `/favicon/{domain}.png` | GET | 网站图标代理（查边缘缓存 → 回源 → 写缓存） |
 
 ## 本地开发
 
@@ -177,22 +182,40 @@ npm run preview
 GITHUB_TOKEN=ghp_xxxxxxxxxxxx
 CLOUD_PASSWORD=your-password
 FAVICON_SOURCE=duckduckgo
-FAVICON_TTL=2592000
 ```
 
-> 本地运行 `npm run dev` 时，favicon 代理需要 KV：可用 `wrangler pages dev` 配合本地 KV 模拟，或直接在浏览器地址栏访问 `/favicon/{域名}.png` 验证部署后的行为。本地无 KV 时该路由会正常回源但无法缓存。
+> 本地运行 `npm run dev` 时，favicon 代理的边缘缓存需要 `wrangler pages dev` 环境（Cache API 在本地开发时可能不可用）。直接在浏览器地址栏访问 `/favicon/{域名}.png` 可验证回源行为。
+
+## 更新
+
+当上游仓库有更新时，同步到你 Fork 的仓库：
+
+```bash
+# 添加上游仓库（只需一次）
+git remote add upstream https://github.com/pxhzaii/NavSync.git
+
+# 拉取并合并上游更新
+git fetch upstream
+git merge upstream/main
+
+# 推送到你的仓库
+git push origin main
+```
+
+推送后 Cloudflare Pages 会自动重新部署。
 
 ## 自定义修改
 
 | 想改什么 | 文件位置 | 说明 |
 | --- | --- | --- |
 | 浏览器标签图标 | `public/favicon.png` | 替换图片文件即可，建议 32x32 或 64x64 PNG |
+| 页面头部 Logo | `public/favicon.png` | 与标签图标共用同一文件，修改同上 |
 | 网站标题 | `index.html` | 修改 `<title>` 标签内容 |
 | 默认搜索引擎 | `src/utils/types/search.ts` + `src/preset.json` | 列表顺序和 `preset.json` 中 `settings.search` 字段 |
 
 ## 致谢
 
-- [Moon-Web-Start](https://github.com/auwen/moon-web-start) - 基础框架
+- [Moon-Web-Start](https://github.com/jic999/moon-web-start) - 基础框架
 - [0x3](https://0x3.com) - 设计灵感
 
 > AI生成
