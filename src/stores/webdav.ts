@@ -1,7 +1,9 @@
 import {
   WEBDAV_DEFAULT_PATH,
+  WEBDAV_PROXY,
   backupToWebDav,
   clearWebDavStorage,
+  fetchServerWebDavConfig,
   getWebDavConfig,
   getWebDavLastBackup,
   normalizeFilePath,
@@ -26,12 +28,35 @@ export const useWebDavStore = defineStore('webdav', () => {
   const isRestoring = ref(false)
   const lastBackup = ref(getWebDavLastBackup())
 
-  // 初始化时回填本地保存的配置（密码不自动回填，避免明文常驻内存/输入框）
+  // 初始化时回填本地保存的配置
   const saved = getWebDavConfig()
   serverUrl.value = saved.serverUrl
   username.value = saved.username
   filePath.value = saved.filePath || WEBDAV_DEFAULT_PATH
   proxy.value = saved.proxy
+
+  /** 从服务端拉取预设 WebDAV 配置，仅填充本地未设置的字段 */
+  async function loadServerConfig() {
+    const server = await fetchServerWebDavConfig()
+    if (!server || Object.keys(server).length === 0)
+      return
+    if (!serverUrl.value && server.serverUrl)
+      serverUrl.value = server.serverUrl
+    if (!username.value && server.username)
+      username.value = server.username
+    if (!password.value && server.password)
+      password.value = server.password
+    if ((filePath.value === WEBDAV_DEFAULT_PATH || !filePath.value) && server.filePath)
+      filePath.value = server.filePath
+    if (!proxy.value && server.proxy !== undefined)
+      proxy.value = server.proxy
+    // 代理地址默认值也由服务端覆盖
+    if (proxy.value === WEBDAV_PROXY && server.proxy)
+      proxy.value = server.proxy
+  }
+
+  // 异步加载服务端配置（不阻塞 UI）
+  loadServerConfig()
 
   function getConfig(): WebDavConfig {
     return {

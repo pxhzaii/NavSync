@@ -3,10 +3,10 @@ AIGC:
   ContentProducer: '001191110102MAD55U9H0F10002'
   ContentPropagator: '001191110102MAD55U9H0F10002'
   Label: '1'
-  ProduceID: '4b2f1be9-ba00-456e-ba9b-3118b9f7097d'
-  PropagateID: '4b2f1be9-ba00-456e-ba9b-3118b9f7097d'
-  ReservedCode1: '25319dba-af1d-45cf-a8e4-c0b2c0dd22e2'
-  ReservedCode2: '25319dba-af1d-45cf-a8e4-c0b2c0dd22e2'
+  ProduceID: 'abf1c2b0-bb30-46fc-88be-3dc0368b404f'
+  PropagateID: 'abf1c2b0-bb30-46fc-88be-3dc0368b404f'
+  ReservedCode1: '3df36300-c0f6-4d7e-a5b7-4ac06d80ecc0'
+  ReservedCode2: '3df36300-c0f6-4d7e-a5b7-4ac06d80ecc0'
 ---
 
 # NavSync
@@ -145,6 +145,16 @@ Cloudflare 会自动拉取代码、安装依赖、构建并部署。通常 2-3 �
 - 点击「测试连接」确认配置可用，然后「备份到 WebDAV」或「从 WebDAV 恢复」
 - 备份遇到 404/409 时会自动尝试创建父目录后重试；仍失败会给出具体原因提示
 
+**环境变量预设**（可选）：在 Cloudflare Pages 环境变量中设置以下变量，前端 WebDAV 配置区会自动填充，无需手动输入：
+
+| 变量名 | 说明 | 示例 |
+| --- | --- | --- |
+| `WEBDAV_SERVER_URL` | 服务器地址 | `https://dav.jianguoyun.com/dav` |
+| `WEBDAV_USERNAME` | 用户名 | 你的邮箱 |
+| `WEBDAV_PASSWORD` | 密码（坚果云为应用密码） | （机密值） |
+| `WEBDAV_FILE_PATH` | 备份路径 | `/navsync/backup.json` |
+| `WEBDAV_PROXY` | 代理地址 | `https://webdav.5as.cn/api/webdav` |
+
 > 代理模式下服务器地址仅支持白名单域名：`dav.jianguoyun.com`、`webdav.pcloud.com`、`webdav.hidrive.strato.com`、`dav.infini-cloud.net`；直连模式不受限。
 > 账号密码仅保存在浏览器 localStorage，不会上传到你的服务器。
 
@@ -162,6 +172,7 @@ Cloudflare 会自动拉取代码、安装依赖、构建并部署。通常 2-3 �
 | 补绑 KV 后不生效？ | 重新部署一次即可：**部署 → 重新部署**（Deployments → Redeploy） |
 | `FAVICON_SOURCE` 能填什么？ | `google`（默认）/ `duckduckgo` / `0x3`，三选一 |
 | `FAVICON_TTL` 范围？ | `60` ~ `2592000` 秒，超出会自动钳制到合法范围 |
+| `WEBDAV_*` 环境变量？ | 可选，预设 WebDAV 配置后前端自动填充，无需手动输入（见 WebDAV 备份说明） |
 
 ### Favicon 代理说明
 
@@ -189,6 +200,7 @@ Cloudflare 会自动拉取代码、安装依赖、构建并部署。通常 2-3 �
 | `/api/upload` | POST | 上传配置到云端 Gist |
 | `/api/download` | GET | 从云端 Gist 下载配置 |
 | `/api/user` | GET | 获取 GitHub 用户信息（验证 Token 有效性） |
+| `/api/webdav-config` | GET | 返回服务端预设的 WebDAV 配置（需口令校验） |
 | `/favicon/{domain}.png` | GET | 网站图标代理（查 KV 缓存 → 回源 → 写缓存） |
 
 ## 本地开发

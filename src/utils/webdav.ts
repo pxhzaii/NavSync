@@ -334,3 +334,35 @@ export async function restoreFromWebDav(config: WebDavConfig): Promise<{ success
     return { success: false, error: e?.message || '恢复失败' }
   }
 }
+
+/** 从服务端 /api/webdav-config 拉取预设配置，仅填充本地未设置的字段 */
+export async function fetchServerWebDavConfig(): Promise<Partial<WebDavConfig>> {
+  try {
+    const password = localStorage.getItem('cloud_password') || ''
+    const headers: Record<string, string> = {}
+    if (password)
+      headers['X-Cloud-Password'] = password
+    const res = await fetch('/api/webdav-config', { headers })
+    if (!res.ok)
+      return {}
+    const data = await res.json() as { config?: Record<string, string> }
+    if (!data.config || typeof data.config !== 'object')
+      return {}
+    // 只返回服务端有值的字段
+    const result: Partial<WebDavConfig> = {}
+    if (data.config.serverUrl)
+      result.serverUrl = data.config.serverUrl
+    if (data.config.username)
+      result.username = data.config.username
+    if (data.config.password)
+      result.password = data.config.password
+    if (data.config.filePath)
+      result.filePath = data.config.filePath
+    if (data.config.proxy !== undefined)
+      result.proxy = data.config.proxy
+    return result
+  }
+  catch {
+    return {}
+  }
+}

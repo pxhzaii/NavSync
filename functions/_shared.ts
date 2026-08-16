@@ -10,6 +10,11 @@
 export interface Env {
   GITHUB_TOKEN: string
   CLOUD_PASSWORD?: string
+  WEBDAV_SERVER_URL?: string
+  WEBDAV_USERNAME?: string
+  WEBDAV_PASSWORD?: string
+  WEBDAV_FILE_PATH?: string
+  WEBDAV_PROXY?: string
 }
 
 const GIST_API = 'https://api.github.com/gists'
