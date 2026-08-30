@@ -65,7 +65,6 @@ favicon 缓存需要用到 Cloudflare KV，提前创建好，后续绑定时直�
 2. 左侧菜单进入 **Workers 和 Pages**（Workers & Pages）→ **KV**
 3. 点击 **创建命名空间**（Create namespace）
 4. **命名空间名称填 `navsync-favicon`**（建议照填，方便后续对照；也可以取其他名字，不影响功能）
-5. 点击 **添加**（Add）
 
 ### 第四步：在 Cloudflare Pages 部署
 
