@@ -1,13 +1,4 @@
----
-AIGC:
-  ContentProducer: '001191110102MAD55U9H0F10002'
-  ContentPropagator: '001191110102MAD55U9H0F10002'
-  Label: '1'
-  ProduceID: '60470381-ac86-498e-b501-75ab764792ac'
-  PropagateID: '60470381-ac86-498e-b501-75ab764792ac'
-  ReservedCode1: '20b43368-e022-4038-aa3d-abecccfe3f19'
-  ReservedCode2: '20b43368-e022-4038-aa3d-abecccfe3f19'
----
+
 
 # NavSync
 
