@@ -28,8 +28,8 @@
 
 
 ## 书签格式转换书签格式转换.html  
-单独下载后，浏览器打开就用
-
+下载本页面后，浏览器打开就用
+https://github.com/pxhzaii/NavSync/blob/main/%E4%B9%A6%E7%AD%BE%E6%A0%BC%E5%BC%8F%E8%BD%AC%E6%8D%A2.html
 
 
 ## 一键部署
