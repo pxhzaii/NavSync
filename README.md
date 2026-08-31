@@ -27,8 +27,9 @@
 - **Favicon 代理 + KV 缓存**（后端统一代理第三方图标源，KV 缓存 30 天，同一域名仅回源一次）
 
 
-## 书签格式转换书签格式转换.html  
-下载本页面后，浏览器打开就用
+## 书签格式转
+仓库内的 `换书签格式转换.html` 文件  
+下载文件后，浏览器打开就用
 https://github.com/pxhzaii/NavSync/blob/main/%E4%B9%A6%E7%AD%BE%E6%A0%BC%E5%BC%8F%E8%BD%AC%E6%8D%A2.html
 
 
